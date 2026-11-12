@@ -1,30 +1,89 @@
 ---
 import Base from '@/layouts/Base.astro';
 import NewsCard from '@/components/NewsCard.astro';
+import LangNotice from '@/components/LangNotice.astro';
 import { getCollection } from 'astro:content';
 import { getLocale, t, href } from '@/i18n/utils';
 import { localeParams } from '@/i18n/paths';
+import { getLocalized } from '@/lib/content';
+import { organization } from '@/lib/schema';
 export function getStaticPaths() { return localeParams; }
 const locale = getLocale(Astro.url);
 const tr = t(locale);
+const found = await getLocalized('home', '', locale);
+if (!found) throw new Error('Conteúdo da página inicial não encontrado (src/content/home/pt.yaml).');
+const h = found.entry.data;
 const news = (await getCollection('noticias', ({ data }) => !data.rascunho))
   .sort((a, b) => b.data.data.valueOf() - a.data.data.valueOf())
   .slice(0, 3);
+const siteUrl = new URL(href('pt'), Astro.site).toString();
 ---
-<Base>
-  <section class="hero">
-    <h1>{tr('home.title')}</h1>
-    <p class="lead">{tr('home.lead')}</p>
-  </section>
-  <section>
-    <h2>{tr('home.latest')}</h2>
-    <div class="grid">{news.map((entry) => <NewsCard entry={entry} locale={locale} />)}</div>
-    <p><a href={href(locale, 'noticias')}>{tr('news.all')}</a></p>
+<Base seoTitle={h.seoTitulo} description={h.seoDescricao} jsonLd={organization(siteUrl)}>
+  <LangNotice locale={locale} show={found.fallback} />
+  <div lang={found.fallback ? 'pt-BR' : undefined}>
+    <section class="hero">
+      <h1>{h.titulo}</h1>
+      <p class="lead">{h.texto}</p>
+      <p class="actions">
+        <a class="btn btn-primary" href={href(locale, h.botao1Link)}>{h.botao1Texto}</a>
+        <a class="btn" href={href(locale, h.botao2Link)}>{h.botao2Texto}</a>
+      </p>
+    </section>
+
+    <section aria-labelledby="perfis">
+      <h2 id="perfis">{h.perfisTitulo}</h2>
+      <ul class="cards">
+        {h.perfis.map((p) => (
+          <li class="card">
+            <h3><a href={href(locale, p.link)}>{p.titulo}</a></h3>
+            <p>{p.texto}</p>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <section aria-labelledby="numeros" class="numbers">
+      <h2 id="numeros" class="sr-only">{tr('home.numbersTitle')}</h2>
+      <dl>
+        {h.numeros.map((n) => (<div><dt>{n.valor}</dt><dd>{n.rotulo}</dd></div>))}
+      </dl>
+    </section>
+  </div>
+
+  {news.length > 0 && (
+    <section aria-labelledby="noticias">
+      <h2 id="noticias">{tr('home.latest')}</h2>
+      <div class="grid">{news.map((entry) => <NewsCard entry={entry} locale={locale} />)}</div>
+      <p><a href={href(locale, 'noticias')}>{tr('news.all')}</a></p>
+    </section>
+  )}
+
+  <section class="join" aria-labelledby="filiar" lang={found.fallback ? 'pt-BR' : undefined}>
+    <h2 id="filiar">{h.filiarTitulo}</h2>
+    <p>{h.filiarTexto}</p>
+    <p><a class="btn btn-primary" href={href(locale, 'filiacao')}>{h.filiarBotao}</a></p>
   </section>
 </Base>
 <style>
-  .hero { padding-block: var(--space-12); max-width: 48rem; }
+  section { margin-block: var(--space-12); }
+  .hero { padding-block: var(--space-8) 0; max-width: 48rem; }
   h1 { font-size: var(--text-2xl); margin: 0 0 var(--space-4); }
   .lead { font-size: var(--text-lg); color: var(--color-ink-muted); }
+  .actions { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-6); }
+  .btn { display: inline-block; padding: var(--space-3) var(--space-6); border: 1px solid var(--color-ink); border-radius: var(--radius); text-decoration: none; font-weight: 600; }
+  .btn-primary { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+  .cards { list-style: none; padding: 0; display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); }
+  .card { background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius); padding: var(--space-6); position: relative; }
+  .card h3 { margin: 0 0 var(--space-2); font-size: var(--text-lg); }
+  .card a { text-decoration: none; }
+  .card a::after { content: ''; position: absolute; inset: 0; }
+  .card:hover { border-color: var(--color-ink); }
+  .card p { margin: 0; color: var(--color-ink-muted); }
+  .numbers dl { display: grid; gap: var(--space-6); grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); margin: 0; }
+  .numbers dt { font-family: var(--font-display); font-size: var(--text-2xl); font-weight: 700; color: var(--color-accent); }
+  .numbers dd { margin: 0; color: var(--color-ink-muted); }
   .grid { display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); }
+  .join { background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius); padding: var(--space-8); max-width: 48rem; }
+  .join h2 { margin-top: 0; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 </style>

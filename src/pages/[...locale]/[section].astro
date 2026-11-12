@@ -1,21 +1,61 @@
 ---
-// Página provisória para as seções ainda não construídas.
-// Ao criar uma seção de verdade, crie src/pages/[...locale]/<slug>/index.astro e remova o slug daqui.
+// Páginas das seções, com o conteúdo da coleção "paginas" (Keystatic).
+// Seção sem conteúdo ainda: mostra "Página em construção".
+// Para uma seção com layout próprio, crie src/pages/[...locale]/<slug>/index.astro e tire o slug daqui.
 import Base from '@/layouts/Base.astro';
+import Faq from '@/components/Faq.astro';
+import LangNotice from '@/components/LangNotice.astro';
+import { render } from 'astro:content';
 import { sections } from '@/i18n/nav';
 import { locales, defaultLocale } from '@/i18n/ui';
 import { getLocale, t } from '@/i18n/utils';
+import { getLocalized } from '@/lib/content';
+import { faqPage } from '@/lib/schema';
 export function getStaticPaths() {
   const pending = sections.filter((s) => s.slug !== 'noticias');
   return locales.flatMap((l) => pending.map((s) => ({
     params: { locale: l === defaultLocale ? undefined : l, section: s.slug },
-    props: { label: s.label },
+    props: { label: s.label, slug: s.slug },
   })));
 }
-const { label } = Astro.props;
-const tr = t(getLocale(Astro.url));
+const { label, slug } = Astro.props;
+const locale = getLocale(Astro.url);
+const tr = t(locale);
+const found = await getLocalized('paginas', slug, locale);
+const page = found?.entry;
+const { Content } = page ? await render(page) : { Content: null };
+const faq = page?.data.faq ?? [];
 ---
-<Base title={tr(label)}>
-  <h1>{tr(label)}</h1>
-  <p>{tr('placeholder.wip')}</p>
-</Base>
+{page ? (
+  <Base
+    title={page.data.titulo}
+    seoTitle={page.data.seoTitulo}
+    description={page.data.seoDescricao ?? page.data.intro}
+    jsonLd={faq.length ? faqPage(faq) : undefined}
+  >
+    <article class="page">
+      <LangNotice locale={locale} show={!!found?.fallback} />
+      <p class="eyebrow">{tr(label)}</p>
+      <div lang={found?.fallback ? 'pt-BR' : undefined}>
+      <h1>{page.data.titulo}</h1>
+      {page.data.intro && <p class="lead">{page.data.intro}</p>}
+      <div class="prose">{Content && <Content />}</div>
+      <Faq items={faq} locale={found?.fallback ? defaultLocale : locale} />
+      </div>
+    </article>
+  </Base>
+) : (
+  <Base title={tr(label)}>
+    <h1>{tr(label)}</h1>
+    <p>{tr('placeholder.wip')}</p>
+  </Base>
+)}
+<style>
+  .page { padding-block: var(--space-8) var(--space-12); }
+  .eyebrow { margin: var(--space-6) 0 var(--space-2); font-size: var(--text-sm); text-transform: uppercase; letter-spacing: .06em; color: var(--color-accent); font-weight: 600; }
+  h1 { font-size: var(--text-2xl); margin: 0 0 var(--space-4); max-width: 40rem; }
+  .lead { font-size: var(--text-lg); color: var(--color-ink-muted); max-width: 44rem; margin: 0 0 var(--space-8); }
+  .prose { max-width: 44rem; }
+  .prose :global(h2) { font-size: var(--text-xl); margin: var(--space-12) 0 var(--space-4); }
+  .prose :global(li) { margin-bottom: var(--space-2); }
+</style>

@@ -1,0 +1,11 @@
+---
+// Aviso de página sem tradução (F01). Aparece só quando o conteúdo é o fallback em português.
+import { t } from '@/i18n/utils';
+import type { Locale } from '@/i18n/ui';
+interface Props { locale: Locale; show: boolean }
+const { locale, show } = Astro.props;
+---
+{show && <p class="notice" role="note">{t(locale)('lang.missing')}</p>}
+<style>
+  .notice { margin: var(--space-6) 0 0; padding: var(--space-3) var(--space-4); background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius); font-size: var(--text-sm); }
+</style>

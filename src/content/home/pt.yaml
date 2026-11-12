@@ -1,0 +1,37 @@
+titulo: Germanística brasileira, rumo ao Rio 2030
+texto: >-
+  A IVG Brasil é o capítulo brasileiro da Associação Internacional de Germanística (IVG) e reúne pesquisadores, professores e estudantes de língua e literatura alemã no Brasil. Pela primeira vez em 75 anos, a IVG é presidida da América Latina, e o próximo congresso mundial acontece no Rio de Janeiro, em 2030.
+botao1Texto: Conheça a IVG Brasil
+botao1Link: sobre
+botao2Texto: Rio 2030
+botao2Link: rio2030
+perfisTitulo: Por onde começar
+perfis:
+  - titulo: Pesquisadores
+    texto: Filie-se, acompanhe chamadas e prepare-se para o Rio 2030.
+    link: filiacao
+  - titulo: Professores de alemão
+    texto: Formação, materiais e uma comunidade para a sua sala de aula.
+    link: ensino
+  - titulo: Estudantes
+    texto: Descubra o que dá para fazer com o alemão depois da escola.
+    link: ensino
+  - titulo: Instituições e parceiros
+    texto: Governança, documentos e formas de apoiar o congresso.
+    link: sobre
+numeros:
+  - valor: '1955'
+    rotulo: fundação da IVG, em Roma
+  - valor: '15'
+    rotulo: congressos internacionais realizados
+  - valor: 1ª
+    rotulo: presidência latino-americana, desde 2025
+  - valor: '2030'
+    rotulo: XVI Congresso, no Rio de Janeiro
+filiarTitulo: Faça parte
+filiarTexto: >-
+  Membros da IVG participam das assembleias, recebem as chamadas do congresso em primeira mão e ajudam a decidir os rumos da área.
+filiarBotao: Como se filiar
+seoTitulo: IVG Brasil · Germanística, ensino de alemão e Congresso Rio 2030
+seoDescricao: >-
+  Capítulo brasileiro da Associação Internacional de Germanística. Pesquisa, ensino de alemão no Brasil e o XVI Congresso Internacional da IVG, Rio de Janeiro, 2030.

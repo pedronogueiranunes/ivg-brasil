@@ -3,12 +3,15 @@
 ## Objetivo
 Criar todas as coleções de conteúdo que a equipe vai editar pelo painel, seguindo o modelo de `noticias`.
 
+## Já feito (não refazer)
+
+- `paginas` (páginas das seções, com SEO e perguntas frequentes) e o singleton `home` já existem, com conteúdo. Use os dois como modelo.
+
 ## Coleções
 Para cada uma: definir em `keystatic.config.ts`, espelhar em `src/content.config.ts` (zod), criar 1 ou 2 itens de exemplo marcados como exemplo.
 
 | Coleção | Tipo | Campos principais |
 | --- | --- | --- |
-| `paginas` | collection | titulo, slug, resumo, corpo (markdoc), secao (select: sobre, pesquisa, ensino, filiacao, rio2030, contato) |
 | `eventos` | collection | titulo, dataInicio, dataFim, local, online (checkbox), link, resumo, corpo, editoria |
 | `pessoas` | collection | nome, cargo, instituicao, foto, fotoAlt, orgao (select: diretoria, comite-deliberativo, conselho-fiscal, comite-rio2030), ordem, lattes, email |
 | `documentos` | collection | titulo, tipo (estatuto, ata, relatorio, outro), idioma, data, arquivo (file em public/uploads/documentos) |

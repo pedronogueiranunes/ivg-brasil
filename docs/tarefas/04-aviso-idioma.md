@@ -3,6 +3,10 @@
 ## Objetivo
 Quando o conteúdo não existe no idioma escolhido, mostrar o texto em PT com um aviso claro, no idioma do visitante.
 
+## Já feito
+
+`src/components/LangNotice.astro` já está nas páginas das seções e na home. Falta aplicar nas notícias (hoje com aviso próprio) e nas páginas criadas depois.
+
 ## O que fazer
 - Componente `src/components/LangNotice.astro` usando a chave `lang.missing`.
 - Usar em todas as páginas de detalhe que chamam `getLocalized` (tarefa 03).

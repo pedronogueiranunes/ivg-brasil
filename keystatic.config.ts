@@ -1,11 +1,71 @@
-import { config, collection, fields } from '@keystatic/core';
+import { config, collection, singleton, fields } from '@keystatic/core';
 
-// Modelo de coleção. As outras 11 coleções seguem este padrão
-// (ver docs/tarefas/02-colecoes-keystatic.md).
+// Coleções do painel. As demais seguem este padrão
+// (ver docs/tarefas/02-colecoes-keystatic.md). Este schema precisa espelhar src/content.config.ts.
+
+const seo = {
+  seoTitulo: fields.text({ label: 'Título para o Google', description: 'Até 65 caracteres. Se ficar vazio, usa o título da página.', validation: { length: { max: 70 } } }),
+  seoDescricao: fields.text({ label: 'Descrição para o Google', description: 'Até 160 caracteres. Aparece abaixo do título nos resultados de busca.', multiline: true, validation: { length: { max: 170 } } }),
+};
 export default config({
   storage: { kind: 'local' },
   ui: { brand: { name: 'IVG Brasil' } },
+  singletons: {
+    home: singleton({
+      label: 'Página inicial',
+      path: 'src/content/home/pt',
+      format: { data: 'yaml' },
+      schema: {
+        titulo: fields.text({ label: 'Título principal' }),
+        texto: fields.text({ label: 'Texto de abertura', multiline: true }),
+        botao1Texto: fields.text({ label: 'Botão 1: texto' }),
+        botao1Link: fields.text({ label: 'Botão 1: seção', description: 'Ex.: sobre, rio2030' }),
+        botao2Texto: fields.text({ label: 'Botão 2: texto' }),
+        botao2Link: fields.text({ label: 'Botão 2: seção' }),
+        perfisTitulo: fields.text({ label: 'Atalhos por perfil: título' }),
+        perfis: fields.array(
+          fields.object({
+            titulo: fields.text({ label: 'Perfil' }),
+            texto: fields.text({ label: 'Chamada', multiline: true }),
+            link: fields.text({ label: 'Leva para (seção)' }),
+          }),
+          { label: 'Atalhos por perfil', itemLabel: (p) => p.fields.titulo.value },
+        ),
+        numeros: fields.array(
+          fields.object({ valor: fields.text({ label: 'Número' }), rotulo: fields.text({ label: 'Legenda' }) }),
+          { label: 'Números', itemLabel: (p) => p.fields.valor.value },
+        ),
+        filiarTitulo: fields.text({ label: 'Chamada final: título' }),
+        filiarTexto: fields.text({ label: 'Chamada final: texto', multiline: true }),
+        filiarBotao: fields.text({ label: 'Chamada final: botão' }),
+        ...seo,
+      },
+    }),
+  },
   collections: {
+    paginas: collection({
+      label: 'Páginas das seções',
+      slugField: 'titulo',
+      path: 'src/content/paginas/pt/*',
+      format: { contentField: 'corpo' },
+      entryLayout: 'content',
+      schema: {
+        titulo: fields.slug({
+          name: { label: 'Título da página (H1)' },
+          slug: { label: 'Endereço', description: 'Igual ao nome da seção: sobre, pesquisa, ensino, filiacao, rio2030, contato.' },
+        }),
+        intro: fields.text({ label: 'Frase de abertura', description: 'A primeira frase da página. Diga o que é, com o nome completo da entidade.', multiline: true }),
+        ...seo,
+        faq: fields.array(
+          fields.object({
+            pergunta: fields.text({ label: 'Pergunta' }),
+            resposta: fields.text({ label: 'Resposta', description: '2 a 3 frases que façam sentido sozinhas.', multiline: true }),
+          }),
+          { label: 'Perguntas frequentes', itemLabel: (p) => p.fields.pergunta.value },
+        ),
+        corpo: fields.markdoc({ label: 'Texto' }),
+      },
+    }),
     noticias: collection({
       label: 'Notícias',
       slugField: 'titulo',

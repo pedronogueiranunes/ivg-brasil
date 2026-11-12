@@ -1,0 +1,24 @@
+---
+import { t } from '@/i18n/utils';
+import type { Locale } from '@/i18n/ui';
+interface Props { items: { pergunta: string; resposta: string }[]; locale: Locale }
+const { items, locale } = Astro.props;
+---
+{items.length > 0 && (
+  <section class="faq" aria-labelledby="faq-title">
+    <h2 id="faq-title">{t(locale)('faq.title')}</h2>
+    {items.map((i) => (
+      <details>
+        <summary>{i.pergunta}</summary>
+        <p>{i.resposta}</p>
+      </details>
+    ))}
+  </section>
+)}
+<style>
+  .faq { margin-top: var(--space-12); max-width: 48rem; }
+  details { border-top: 1px solid var(--color-line); padding-block: var(--space-4); }
+  details:last-of-type { border-bottom: 1px solid var(--color-line); }
+  summary { cursor: pointer; font-weight: 600; }
+  details p { margin: var(--space-3) 0 0; }
+</style>

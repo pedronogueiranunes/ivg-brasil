@@ -19,6 +19,7 @@ export const ui = {
     'home.latest': 'Notícias recentes',
     'news.readmore': 'Ler mais', 'news.all': 'Todas as notícias',
     'placeholder.wip': 'Página em construção.',
+    'faq.title': 'Perguntas frequentes', 'home.numbersTitle': 'A IVG em números',
     'footer.rights': 'Todos os direitos reservados.',
   },
   en: {
@@ -34,6 +35,7 @@ export const ui = {
     'home.latest': 'Latest news',
     'news.readmore': 'Read more', 'news.all': 'All news',
     'placeholder.wip': 'Page under construction.',
+    'faq.title': 'Frequently asked questions', 'home.numbersTitle': 'The IVG in numbers',
     'footer.rights': 'All rights reserved.',
   },
   de: {
@@ -49,6 +51,7 @@ export const ui = {
     'home.latest': 'Aktuelles',
     'news.readmore': 'Weiterlesen', 'news.all': 'Alle Meldungen',
     'placeholder.wip': 'Seite im Aufbau.',
+    'faq.title': 'Häufige Fragen', 'home.numbersTitle': 'Die IVG in Zahlen',
     'footer.rights': 'Alle Rechte vorbehalten.',
   },
 } as const;
