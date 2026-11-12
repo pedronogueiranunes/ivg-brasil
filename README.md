@@ -2,7 +2,7 @@
 
 Site da IVG Brasil (Capítulo Brasileiro da Internationale Vereinigung für Germanistik) e do hotsite do XVI Congresso Internacional da IVG, Rio 2030.
 
-- Staging: https://pedronogueiranunes.github.io/ivg-brasil/ (não indexado pelo Google)
+- Staging: https://pedronogueira.dev/ivg-brasil/ (o endereço pedronogueiranunes.github.io/ivg-brasil/ redireciona para ele) (não indexado pelo Google)
 - Produção (futuro): ivgbrasil.org, no Cloudflare Pages
 
 ## Stack
