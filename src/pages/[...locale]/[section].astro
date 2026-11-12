@@ -1,0 +1,21 @@
+---
+// Página provisória para as seções ainda não construídas.
+// Ao criar uma seção de verdade, crie src/pages/[...locale]/<slug>/index.astro e remova o slug daqui.
+import Base from '@/layouts/Base.astro';
+import { sections } from '@/i18n/nav';
+import { locales, defaultLocale } from '@/i18n/ui';
+import { getLocale, t } from '@/i18n/utils';
+export function getStaticPaths() {
+  const pending = sections.filter((s) => s.slug !== 'noticias');
+  return locales.flatMap((l) => pending.map((s) => ({
+    params: { locale: l === defaultLocale ? undefined : l, section: s.slug },
+    props: { label: s.label },
+  })));
+}
+const { label } = Astro.props;
+const tr = t(getLocale(Astro.url));
+---
+<Base title={tr(label)}>
+  <h1>{tr(label)}</h1>
+  <p>{tr('placeholder.wip')}</p>
+</Base>

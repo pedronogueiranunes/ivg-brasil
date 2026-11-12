@@ -1,0 +1,16 @@
+---
+// F01, versão mínima. Tarefa do ChatGPT: aviso de página sem tradução (docs/tarefas/04).
+import { getLocale, switchLocale, t } from '@/i18n/utils';
+import { locales } from '@/i18n/ui';
+const current = getLocale(Astro.url);
+---
+<nav aria-label={t(current)('lang.label')} class="langs">
+  {locales.map((l) => (
+    <a href={switchLocale(Astro.url, l)} hreflang={l} lang={l} aria-current={l === current ? 'true' : undefined}>{l.toUpperCase()}</a>
+  ))}
+</nav>
+<style>
+  .langs { display: flex; gap: var(--space-2); font-size: var(--text-sm); }
+  .langs a { text-decoration: none; padding: var(--space-1); }
+  .langs a[aria-current='true'] { font-weight: 700; text-decoration: underline; }
+</style>

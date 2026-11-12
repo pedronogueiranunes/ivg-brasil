@@ -1,0 +1,28 @@
+---
+import '@/styles/global.css';
+import Header from '@/components/Header.astro';
+import Footer from '@/components/Footer.astro';
+import { getLocale, switchLocale, t } from '@/i18n/utils';
+import { locales } from '@/i18n/ui';
+interface Props { title?: string; description?: string }
+const locale = getLocale(Astro.url);
+const tr = t(locale);
+const { title, description = tr('home.lead') } = Astro.props;
+const fullTitle = title ? `${title} · ${tr('site.name')}` : `${tr('site.name')} · ${tr('site.tagline')}`;
+---
+<!doctype html>
+<html lang={locale === 'pt' ? 'pt-BR' : locale}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    {locales.map((l) => <link rel="alternate" hreflang={l} href={new URL(switchLocale(Astro.url, l), Astro.site)} />)}
+    <meta name="robots" content="noindex" />
+  </head>
+  <body>
+    <Header />
+    <main id="conteudo" class="container"><slot /></main>
+    <Footer />
+  </body>
+</html>

@@ -1,0 +1,30 @@
+---
+import Base from '@/layouts/Base.astro';
+import NewsCard from '@/components/NewsCard.astro';
+import { getCollection } from 'astro:content';
+import { getLocale, t, href } from '@/i18n/utils';
+import { localeParams } from '@/i18n/paths';
+export function getStaticPaths() { return localeParams; }
+const locale = getLocale(Astro.url);
+const tr = t(locale);
+const news = (await getCollection('noticias', ({ data }) => !data.rascunho))
+  .sort((a, b) => b.data.data.valueOf() - a.data.data.valueOf())
+  .slice(0, 3);
+---
+<Base>
+  <section class="hero">
+    <h1>{tr('home.title')}</h1>
+    <p class="lead">{tr('home.lead')}</p>
+  </section>
+  <section>
+    <h2>{tr('home.latest')}</h2>
+    <div class="grid">{news.map((entry) => <NewsCard entry={entry} locale={locale} />)}</div>
+    <p><a href={href(locale, 'noticias')}>{tr('news.all')}</a></p>
+  </section>
+</Base>
+<style>
+  .hero { padding-block: var(--space-12); max-width: 48rem; }
+  h1 { font-size: var(--text-2xl); margin: 0 0 var(--space-4); }
+  .lead { font-size: var(--text-lg); color: var(--color-ink-muted); }
+  .grid { display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); }
+</style>

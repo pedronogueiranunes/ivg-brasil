@@ -1,0 +1,15 @@
+---
+import { getLocale, t } from '@/i18n/utils';
+const tr = t(getLocale(Astro.url));
+const year = new Date().getFullYear();
+---
+<footer class="footer">
+  <div class="container">
+    <p><strong>{tr('site.name')}</strong> · {tr('site.tagline')}</p>
+    <p class="small">© {year} {tr('site.name')}. {tr('footer.rights')}</p>
+  </div>
+</footer>
+<style>
+  .footer { margin-top: var(--space-16); padding-block: var(--space-8); border-top: 1px solid var(--color-line); background: var(--color-surface); }
+  .small { font-size: var(--text-sm); color: var(--color-ink-muted); }
+</style>
