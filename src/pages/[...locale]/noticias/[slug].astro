@@ -1,23 +1,24 @@
 ---
 import Base from '@/layouts/Base.astro';
-import { getCollection, render } from 'astro:content';
+import { render } from 'astro:content';
 import { locales, defaultLocale } from '@/i18n/ui';
 import { getLocale, t } from '@/i18n/utils';
+import { getLocalizedList } from '@/lib/content';
 export async function getStaticPaths() {
-  const news = await getCollection('noticias', ({ data }) => !data.rascunho);
-  return locales.flatMap((l) => news.map((entry) => ({
-    params: { locale: l === defaultLocale ? undefined : l, slug: entry.id.replace(/^pt\//, '') },
-    props: { entry },
+  const porIdioma = await Promise.all(locales.map(async (l) => [l, await getLocalizedList('noticias', l, ({ data }) => !data.rascunho)] as const));
+  return porIdioma.flatMap(([l, itens]) => itens.map(({ slug, entry, fallback }) => ({
+    params: { locale: l === defaultLocale ? undefined : l, slug },
+    props: { entry, fallback },
   })));
 }
-const { entry } = Astro.props;
+const { entry, fallback } = Astro.props;
 const locale = getLocale(Astro.url);
 const { Content } = await render(entry);
 const date = entry.data.data.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' });
 ---
 <Base title={entry.data.titulo} description={entry.data.resumo}>
   <article class="post">
-    {locale !== 'pt' && <p class="notice" role="note">{t(locale)('lang.missing')}</p>}
+    {fallback && <p class="notice" role="note">{t(locale)('lang.missing')}</p>}
     <p class="meta"><time datetime={entry.data.data.toISOString()}>{date}</time>{entry.data.autor && ` · ${entry.data.autor}`}</p>
     <h1>{entry.data.titulo}</h1>
     <Content />

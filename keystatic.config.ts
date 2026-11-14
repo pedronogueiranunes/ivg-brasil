@@ -11,6 +11,99 @@ const seo = {
 const UFS = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
 const ufOptions = UFS.map((uf) => ({ label: uf, value: uf }));
 
+// Idiomas além do português. O mesmo schema vale para os três (src/content.config.ts não muda).
+// Cada item traduzido usa o mesmo endereço (nome do arquivo) da versão em português.
+const traducoes = [
+  { lang: 'en', rotulo: 'EN' },
+  { lang: 'de', rotulo: 'DE' },
+] as const;
+const enderecoTraduzido = { label: 'Endereço', description: 'Tem que ser igual ao da versão em português.' };
+
+const homeSchema = () => ({
+    titulo: fields.text({ label: 'Título principal' }),
+    texto: fields.text({ label: 'Texto de abertura', multiline: true }),
+    botao1Texto: fields.text({ label: 'Botão 1: texto' }),
+    botao1Link: fields.text({ label: 'Botão 1: seção', description: 'Ex.: sobre, rio2030' }),
+    botao2Texto: fields.text({ label: 'Botão 2: texto' }),
+    botao2Link: fields.text({ label: 'Botão 2: seção' }),
+    perfisTitulo: fields.text({ label: 'Atalhos por perfil: título' }),
+    perfis: fields.array(
+      fields.object({
+        titulo: fields.text({ label: 'Perfil' }),
+        texto: fields.text({ label: 'Chamada', multiline: true }),
+        link: fields.text({ label: 'Leva para (seção)' }),
+      }),
+      { label: 'Atalhos por perfil', itemLabel: (p) => p.fields.titulo.value },
+    ),
+    numeros: fields.array(
+      fields.object({ valor: fields.text({ label: 'Número' }), rotulo: fields.text({ label: 'Legenda' }) }),
+      { label: 'Números', itemLabel: (p) => p.fields.valor.value },
+    ),
+    filiarTitulo: fields.text({ label: 'Chamada final: título' }),
+    filiarTexto: fields.text({ label: 'Chamada final: texto', multiline: true }),
+    filiarBotao: fields.text({ label: 'Chamada final: botão' }),
+    ...seo,
+});
+
+const paginasSchema = (traduzido: boolean) => ({
+    titulo: fields.slug({
+      name: { label: 'Título da página (H1)' },
+      slug: { label: 'Endereço', description: traduzido ? 'Tem que ser igual ao da versão em português.' : 'Igual ao nome da seção: sobre, pesquisa, ensino, filiacao, rio2030, contato.' },
+    }),
+    intro: fields.text({ label: 'Frase de abertura', description: 'A primeira frase da página. Diga o que é, com o nome completo da entidade.', multiline: true }),
+    ...seo,
+    faq: fields.array(
+      fields.object({
+        pergunta: fields.text({ label: 'Pergunta' }),
+        resposta: fields.text({ label: 'Resposta', description: '2 a 3 frases que façam sentido sozinhas.', multiline: true }),
+      }),
+      { label: 'Perguntas frequentes', itemLabel: (p) => p.fields.pergunta.value },
+    ),
+    corpo: fields.markdoc({ label: 'Texto' }),
+});
+
+const noticiasSchema = (traduzido: boolean) => ({
+    titulo: fields.slug({ name: { label: 'Título', validation: { length: { min: 5, max: 110 } } }, ...(traduzido ? { slug: enderecoTraduzido } : {}) }),
+    resumo: fields.text({ label: 'Resumo', description: 'Duas linhas. Aparece nos cards e no compartilhamento.', multiline: true, validation: { length: { min: 20, max: 220 } } }),
+    data: fields.date({ label: 'Data de publicação', validation: { isRequired: true } }),
+    editoria: fields.select({
+      label: 'Editoria',
+      options: [
+        { label: 'Carreira em Germanística', value: 'carreira' },
+        { label: 'Rumo ao Rio 2030', value: 'rio2030' },
+        { label: 'Alemão nas Escolas Públicas', value: 'escolas' },
+        { label: 'História e Ciência', value: 'historia' },
+      ],
+      defaultValue: 'historia',
+    }),
+    autor: fields.text({ label: 'Autor' }),
+    imagem: fields.image({ label: 'Imagem de capa', directory: 'public/uploads/noticias', publicPath: '/uploads/noticias/' }),
+    imagemAlt: fields.text({ label: 'Descrição da imagem (acessibilidade)' }),
+    rascunho: fields.checkbox({ label: 'Rascunho', description: 'Rascunhos não aparecem no site.', defaultValue: true }),
+    corpo: fields.markdoc({ label: 'Texto' }),
+});
+
+const eventosSchema = (traduzido: boolean) => ({
+    titulo: fields.slug({ name: { label: 'Nome do evento' }, ...(traduzido ? { slug: enderecoTraduzido } : {}) }),
+    dataInicio: fields.date({ label: 'Data de início', validation: { isRequired: true } }),
+    dataFim: fields.date({ label: 'Data de término', description: 'Deixe vazio se o evento durar um dia.' }),
+    local: fields.text({ label: 'Local', description: 'Cidade e instituição. Para evento online, escreva Online.' }),
+    online: fields.checkbox({ label: 'Evento online', defaultValue: false }),
+    link: fields.url({ label: 'Link do evento ou da inscrição' }),
+    resumo: fields.text({ label: 'Resumo', description: 'Duas linhas. Aparece na agenda.', multiline: true }),
+    editoria: fields.select({
+      label: 'Tipo',
+      options: [
+        { label: 'Congresso', value: 'congresso' },
+        { label: 'Seminário ou simpósio', value: 'seminario' },
+        { label: 'Curso ou formação', value: 'formacao' },
+        { label: 'Reunião institucional', value: 'institucional' },
+      ],
+      defaultValue: 'seminario',
+    }),
+    corpo: fields.markdoc({ label: 'Descrição completa' }),
+});
+
 export default config({
   storage: { kind: 'local' },
   ui: { brand: { name: 'IVG Brasil' } },
@@ -20,31 +113,15 @@ export default config({
       path: 'src/content/home/pt',
       format: { data: 'yaml' },
       schema: {
-        titulo: fields.text({ label: 'Título principal' }),
-        texto: fields.text({ label: 'Texto de abertura', multiline: true }),
-        botao1Texto: fields.text({ label: 'Botão 1: texto' }),
-        botao1Link: fields.text({ label: 'Botão 1: seção', description: 'Ex.: sobre, rio2030' }),
-        botao2Texto: fields.text({ label: 'Botão 2: texto' }),
-        botao2Link: fields.text({ label: 'Botão 2: seção' }),
-        perfisTitulo: fields.text({ label: 'Atalhos por perfil: título' }),
-        perfis: fields.array(
-          fields.object({
-            titulo: fields.text({ label: 'Perfil' }),
-            texto: fields.text({ label: 'Chamada', multiline: true }),
-            link: fields.text({ label: 'Leva para (seção)' }),
-          }),
-          { label: 'Atalhos por perfil', itemLabel: (p) => p.fields.titulo.value },
-        ),
-        numeros: fields.array(
-          fields.object({ valor: fields.text({ label: 'Número' }), rotulo: fields.text({ label: 'Legenda' }) }),
-          { label: 'Números', itemLabel: (p) => p.fields.valor.value },
-        ),
-        filiarTitulo: fields.text({ label: 'Chamada final: título' }),
-        filiarTexto: fields.text({ label: 'Chamada final: texto', multiline: true }),
-        filiarBotao: fields.text({ label: 'Chamada final: botão' }),
-        ...seo,
+        ...homeSchema(),
       },
     }),
+    ...Object.fromEntries(traducoes.map(({ lang, rotulo }) => [`home_${lang}`, singleton({
+      label: `Página inicial (${rotulo})`,
+      path: `src/content/home/${lang}`,
+      format: { data: 'yaml' },
+      schema: homeSchema(),
+    })])),
     config: singleton({
       label: 'Dados gerais do site',
       path: 'src/content/config/pt',
@@ -69,20 +146,7 @@ export default config({
       format: { contentField: 'corpo' },
       entryLayout: 'content',
       schema: {
-        titulo: fields.slug({
-          name: { label: 'Título da página (H1)' },
-          slug: { label: 'Endereço', description: 'Igual ao nome da seção: sobre, pesquisa, ensino, filiacao, rio2030, contato.' },
-        }),
-        intro: fields.text({ label: 'Frase de abertura', description: 'A primeira frase da página. Diga o que é, com o nome completo da entidade.', multiline: true }),
-        ...seo,
-        faq: fields.array(
-          fields.object({
-            pergunta: fields.text({ label: 'Pergunta' }),
-            resposta: fields.text({ label: 'Resposta', description: '2 a 3 frases que façam sentido sozinhas.', multiline: true }),
-          }),
-          { label: 'Perguntas frequentes', itemLabel: (p) => p.fields.pergunta.value },
-        ),
-        corpo: fields.markdoc({ label: 'Texto' }),
+        ...paginasSchema(false),
       },
     }),
     noticias: collection({
@@ -92,24 +156,7 @@ export default config({
       format: { contentField: 'corpo' },
       entryLayout: 'content',
       schema: {
-        titulo: fields.slug({ name: { label: 'Título', validation: { length: { min: 5, max: 110 } } } }),
-        resumo: fields.text({ label: 'Resumo', description: 'Duas linhas. Aparece nos cards e no compartilhamento.', multiline: true, validation: { length: { min: 20, max: 220 } } }),
-        data: fields.date({ label: 'Data de publicação', validation: { isRequired: true } }),
-        editoria: fields.select({
-          label: 'Editoria',
-          options: [
-            { label: 'Carreira em Germanística', value: 'carreira' },
-            { label: 'Rumo ao Rio 2030', value: 'rio2030' },
-            { label: 'Alemão nas Escolas Públicas', value: 'escolas' },
-            { label: 'História e Ciência', value: 'historia' },
-          ],
-          defaultValue: 'historia',
-        }),
-        autor: fields.text({ label: 'Autor' }),
-        imagem: fields.image({ label: 'Imagem de capa', directory: 'public/uploads/noticias', publicPath: '/uploads/noticias/' }),
-        imagemAlt: fields.text({ label: 'Descrição da imagem (acessibilidade)' }),
-        rascunho: fields.checkbox({ label: 'Rascunho', description: 'Rascunhos não aparecem no site.', defaultValue: true }),
-        corpo: fields.markdoc({ label: 'Texto' }),
+        ...noticiasSchema(false),
       },
     }),
     eventos: collection({
@@ -119,24 +166,7 @@ export default config({
       format: { contentField: 'corpo' },
       entryLayout: 'content',
       schema: {
-        titulo: fields.slug({ name: { label: 'Nome do evento' } }),
-        dataInicio: fields.date({ label: 'Data de início', validation: { isRequired: true } }),
-        dataFim: fields.date({ label: 'Data de término', description: 'Deixe vazio se o evento durar um dia.' }),
-        local: fields.text({ label: 'Local', description: 'Cidade e instituição. Para evento online, escreva Online.' }),
-        online: fields.checkbox({ label: 'Evento online', defaultValue: false }),
-        link: fields.url({ label: 'Link do evento ou da inscrição' }),
-        resumo: fields.text({ label: 'Resumo', description: 'Duas linhas. Aparece na agenda.', multiline: true }),
-        editoria: fields.select({
-          label: 'Tipo',
-          options: [
-            { label: 'Congresso', value: 'congresso' },
-            { label: 'Seminário ou simpósio', value: 'seminario' },
-            { label: 'Curso ou formação', value: 'formacao' },
-            { label: 'Reunião institucional', value: 'institucional' },
-          ],
-          defaultValue: 'seminario',
-        }),
-        corpo: fields.markdoc({ label: 'Descrição completa' }),
+        ...eventosSchema(false),
       },
     }),
     pessoas: collection({
@@ -321,5 +351,32 @@ export default config({
         resposta: fields.markdoc({ label: 'Resposta', description: '2 a 3 frases que façam sentido sozinhas.' }),
       },
     }),
+    // Versões em EN e DE de páginas, notícias e eventos (tarefa 03). Mesmo schema, outra pasta.
+    ...Object.fromEntries(traducoes.flatMap(({ lang, rotulo }) => [
+      [`paginas_${lang}`, collection({
+        label: `Páginas das seções (${rotulo})`,
+        slugField: 'titulo',
+        path: `src/content/paginas/${lang}/*`,
+        format: { contentField: 'corpo' },
+        entryLayout: 'content',
+        schema: paginasSchema(true),
+      })],
+      [`noticias_${lang}`, collection({
+        label: `Notícias (${rotulo})`,
+        slugField: 'titulo',
+        path: `src/content/noticias/${lang}/*`,
+        format: { contentField: 'corpo' },
+        entryLayout: 'content',
+        schema: noticiasSchema(true),
+      })],
+      [`eventos_${lang}`, collection({
+        label: `Eventos (${rotulo})`,
+        slugField: 'titulo',
+        path: `src/content/eventos/${lang}/*`,
+        format: { contentField: 'corpo' },
+        entryLayout: 'content',
+        schema: eventosSchema(true),
+      })],
+    ])),
   },
 });

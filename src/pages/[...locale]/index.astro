@@ -3,10 +3,9 @@ import Base from '@/layouts/Base.astro';
 import NewsCard from '@/components/NewsCard.astro';
 import LangNotice from '@/components/LangNotice.astro';
 import Globo from '@/components/Globo.astro';
-import { getCollection } from 'astro:content';
 import { getLocale, t, href } from '@/i18n/utils';
 import { localeParams } from '@/i18n/paths';
-import { getLocalized } from '@/lib/content';
+import { getLocalized, getLocalizedList } from '@/lib/content';
 import { organization } from '@/lib/schema';
 export function getStaticPaths() { return localeParams; }
 const locale = getLocale(Astro.url);
@@ -14,8 +13,8 @@ const tr = t(locale);
 const found = await getLocalized('home', '', locale);
 if (!found) throw new Error('Conteúdo da página inicial não encontrado (src/content/home/pt.yaml).');
 const h = found.entry.data;
-const news = (await getCollection('noticias', ({ data }) => !data.rascunho))
-  .sort((a, b) => b.data.data.valueOf() - a.data.data.valueOf())
+const news = (await getLocalizedList('noticias', locale, ({ data }) => !data.rascunho))
+  .sort((a, b) => b.entry.data.data.valueOf() - a.entry.data.data.valueOf())
   .slice(0, 3);
 const siteUrl = new URL(href('pt'), Astro.site).toString();
 ---
@@ -56,7 +55,7 @@ const siteUrl = new URL(href('pt'), Astro.site).toString();
   {news.length > 0 && (
     <section aria-labelledby="noticias">
       <h2 id="noticias">{tr('home.latest')}</h2>
-      <div class="grid">{news.map((entry) => <NewsCard entry={entry} locale={locale} />)}</div>
+      <div class="grid">{news.map((n) => <NewsCard entry={n.entry} slug={n.slug} fallback={n.fallback} locale={locale} />)}</div>
       <p><a href={href(locale, 'noticias')}>{tr('news.all')}</a></p>
     </section>
   )}

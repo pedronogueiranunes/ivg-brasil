@@ -2,15 +2,16 @@
 import type { CollectionEntry } from 'astro:content';
 import { href, t } from '@/i18n/utils';
 import type { Locale } from '@/i18n/ui';
-interface Props { entry: CollectionEntry<'noticias'>; locale: Locale }
-const { entry, locale } = Astro.props;
-const slug = entry.id.replace(/^pt\//, '');
+// fallback = true: título e resumo em PT dentro de uma página EN ou DE; o atributo lang faz o leitor de tela trocar a pronúncia.
+interface Props { entry: CollectionEntry<'noticias'>; slug: string; locale: Locale; fallback?: boolean }
+const { entry, slug, locale, fallback = false } = Astro.props;
+const textLang = fallback ? 'pt-BR' : undefined;
 const date = entry.data.data.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' });
 ---
 <article class="card">
   <p class="meta"><time datetime={entry.data.data.toISOString()}>{date}</time></p>
-  <h3><a href={href(locale, `noticias/${slug}`)}>{entry.data.titulo}</a></h3>
-  <p>{entry.data.resumo}</p>
+  <h3><a href={href(locale, `noticias/${slug}`)} lang={textLang}>{entry.data.titulo}</a></h3>
+  <p lang={textLang}>{entry.data.resumo}</p>
   <span class="sr-only">{t(locale)('news.readmore')}</span>
 </article>
 <style>
