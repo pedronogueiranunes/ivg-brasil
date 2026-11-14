@@ -16,6 +16,8 @@ const h = found.entry.data;
 const news = (await getLocalizedList('noticias', locale, ({ data }) => !data.rascunho))
   .sort((a, b) => b.entry.data.data.valueOf() - a.entry.data.data.valueOf())
   .slice(0, 3);
+// Dentro do bloco em PT (fallback), o que vem da interface continua no idioma do visitante.
+const uiLang = found.fallback ? locale : undefined;
 const siteUrl = new URL(href('pt'), Astro.site).toString();
 ---
 <Base seoTitle={h.seoTitulo} description={h.seoDescricao} jsonLd={organization(siteUrl)}>
@@ -30,7 +32,7 @@ const siteUrl = new URL(href('pt'), Astro.site).toString();
       </p>
     </section>
 
-    <Globo locale={locale} />
+    <div lang={uiLang}><Globo locale={locale} /></div>
 
     <section aria-labelledby="perfis">
       <h2 id="perfis">{h.perfisTitulo}</h2>
@@ -45,7 +47,7 @@ const siteUrl = new URL(href('pt'), Astro.site).toString();
     </section>
 
     <section aria-labelledby="numeros" class="numbers">
-      <h2 id="numeros" class="sr-only">{tr('home.numbersTitle')}</h2>
+      <h2 id="numeros" class="sr-only" lang={uiLang}>{tr('home.numbersTitle')}</h2>
       <dl>
         {h.numeros.map((n) => (<div><dt>{n.valor}</dt><dd>{n.rotulo}</dd></div>))}
       </dl>
