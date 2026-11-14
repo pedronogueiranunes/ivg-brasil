@@ -1,0 +1,26 @@
+---
+// Página de verificação das coleções. Só existe em `npm run dev`; no build não gera nada.
+import { getCollection } from 'astro:content';
+
+export function getStaticPaths() {
+  return import.meta.env.DEV ? [{ params: { slug: undefined } }] : [];
+}
+
+const nomes = ['eventos', 'pessoas', 'documentos', 'cursos', 'grupos', 'congressos', 'parceiros', 'oportunidades', 'faq', 'config'] as const;
+const resultados = await Promise.all(nomes.map(async (nome) => [nome, (await getCollection(nome)).length] as const));
+---
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex" />
+    <title>Verificação das coleções</title>
+  </head>
+  <body>
+    <main>
+      <h1>Verificação das coleções</h1>
+      <ul>
+        {resultados.map(([nome, total]) => <li>{nome}: {total} item(ns)</li>)}
+      </ul>
+    </main>
+  </body>
+</html>
