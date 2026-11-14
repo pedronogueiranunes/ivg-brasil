@@ -208,7 +208,7 @@ const modos = [
       g.polygonsData(features)
         .polygonCapColor((f: any) => {
           const p = modo === 'paises' ? falantes.get(String(f.id).padStart(3, '0')) : undefined;
-          if (!p) return modo === 'paises' ? cor.linha : 'rgba(0,0,0,0)';
+          if (!p) return cor.linha;
           return `rgba(${ar},${ag},${ab},${(0.3 + 0.7 * escala(p.falantes)).toFixed(2)})`;
         })
         .polygonAltitude((f: any) => {
@@ -313,7 +313,12 @@ const modos = [
           .polygonSideColor(() => 'rgba(0,0,0,0)')
           .polygonStrokeColor(() => cor.papel)
           .polygonsTransitionDuration(reduzido.matches ? 0 : 400);
-        (g.globeMaterial() as any).color.set(cor.superficie);
+        const mat = g.globeMaterial() as any;
+        // Oceano em cor chapada: sem o sombreado cinza do material padrão.
+        mat.color.set('#000000');
+        mat.emissive.set(cor.papel);
+        mat.shininess = 0;
+        mat.specular?.set('#000000');
         const c = g.controls() as any;
         c.autoRotateSpeed = 0.6;
         c.enablePan = false;
