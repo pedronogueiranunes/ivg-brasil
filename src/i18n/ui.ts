@@ -21,6 +21,10 @@ export const ui = {
     'placeholder.wip': 'Página em construção.',
     'faq.title': 'Perguntas frequentes', 'home.numbersTitle': 'A IVG em números',
     'footer.rights': 'Todos os direitos reservados.',
+    'footer.privacy': 'Política de privacidade',
+    'e404.title': 'Página não encontrada',
+    'e404.text': 'O endereço que você abriu não existe ou mudou de lugar. Volte para o início ou escolha uma seção.',
+    'e404.home': 'Ir para o início', 'e404.sections': 'Seções do site',
   },
   en: {
     'site.name': 'IVG Brasil',
@@ -37,6 +41,10 @@ export const ui = {
     'placeholder.wip': 'Page under construction.',
     'faq.title': 'Frequently asked questions', 'home.numbersTitle': 'The IVG in numbers',
     'footer.rights': 'All rights reserved.',
+    'footer.privacy': 'Privacy policy',
+    'e404.title': 'Page not found',
+    'e404.text': 'The address you opened does not exist or has moved. Go back to the start or pick a section.',
+    'e404.home': 'Go to the home page', 'e404.sections': 'Site sections',
   },
   de: {
     'site.name': 'IVG Brasil',
@@ -53,6 +61,10 @@ export const ui = {
     'placeholder.wip': 'Seite im Aufbau.',
     'faq.title': 'Häufige Fragen', 'home.numbersTitle': 'Die IVG in Zahlen',
     'footer.rights': 'Alle Rechte vorbehalten.',
+    'footer.privacy': 'Datenschutzerklärung',
+    'e404.title': 'Seite nicht gefunden',
+    'e404.text': 'Die aufgerufene Adresse existiert nicht oder wurde verschoben. Gehen Sie zur Startseite oder wählen Sie einen Bereich.',
+    'e404.home': 'Zur Startseite', 'e404.sections': 'Bereiche der Website',
   },
 } as const;
 

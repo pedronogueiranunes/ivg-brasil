@@ -1,12 +1,13 @@
 ---
-import { getLocale, t } from '@/i18n/utils';
-const tr = t(getLocale(Astro.url));
+import { getLocale, t, href } from '@/i18n/utils';
+const locale = getLocale(Astro.url);
+const tr = t(locale);
 const year = new Date().getFullYear();
 ---
 <footer class="footer">
   <div class="container">
     <p><strong>{tr('site.name')}</strong> · {tr('site.tagline')}</p>
-    <p class="small">© {year} {tr('site.name')}. {tr('footer.rights')}</p>
+    <p class="small">© {year} {tr('site.name')}. {tr('footer.rights')} · <a href={href(locale, 'privacidade')}>{tr('footer.privacy')}</a></p>
   </div>
 </footer>
 <style>
