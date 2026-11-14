@@ -1,0 +1,54 @@
+---
+// A hospedagem serve este arquivo para qualquer endereço inexistente, então o idioma
+// é escolhido no navegador, pelo começo do caminho (/en/, /de/). Sem JavaScript, fica em português.
+import Base from '@/layouts/Base.astro';
+import { locales, localeNames, type Locale } from '@/i18n/ui';
+import { sections } from '@/i18n/nav';
+import { href, t } from '@/i18n/utils';
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+<Base title={t('pt')('e404.title')} description={t('pt')('e404.text')} bare>
+  <header class="top">
+    <a class="brand" href={href('pt')}>{t('pt')('site.name')}</a>
+    <nav class="langs" aria-label={t('pt')('lang.label')}>
+      {locales.map((l) => <a href={href(l)} hreflang={l} lang={l}>{localeNames[l]}</a>)}
+    </nav>
+  </header>
+  {locales.map((l: Locale) => {
+    const tr = t(l);
+    return (
+      <section data-lang={l} lang={l === 'pt' ? 'pt-BR' : l} hidden={l !== 'pt'} class="erro">
+        <p class="codigo">404</p>
+        <h1>{tr('e404.title')}</h1>
+        <p class="lead">{tr('e404.text')}</p>
+        <p><a class="botao" href={href(l)}>{tr('e404.home')}</a></p>
+        <h2>{tr('e404.sections')}</h2>
+        <ul>
+          {sections.map((s) => <li><a href={href(l, s.slug)}>{tr(s.label)}</a></li>)}
+        </ul>
+        <p class="small"><a href={href(l, 'privacidade')}>{tr('footer.privacy')}</a></p>
+      </section>
+    );
+  })}
+  <script is:inline define:vars={{ base }}>
+    var p = location.pathname;
+    if (p.indexOf(base) === 0) p = p.slice(base.length);
+    var m = p.match(/^\/(en|de)(\/|$)/);
+    var l = m ? m[1] : 'pt';
+    document.querySelectorAll('[data-lang]').forEach(function (el) { el.hidden = el.getAttribute('data-lang') !== l; });
+    document.documentElement.lang = l === 'pt' ? 'pt-BR' : l;
+  </script>
+</Base>
+<style>
+  .top { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); padding-block: var(--space-3); border-bottom: 1px solid var(--color-line); }
+  .brand { font-weight: 700; font-size: var(--text-lg); text-decoration: none; }
+  .langs { display: flex; gap: var(--space-3); margin-left: auto; font-size: var(--text-sm); }
+  .erro { padding-block: var(--space-12); }
+  .codigo { font-size: var(--text-sm); font-weight: 700; letter-spacing: .08em; color: var(--color-accent); margin: 0 0 var(--space-2); }
+  h1 { font-size: var(--text-2xl); margin: 0 0 var(--space-4); }
+  h2 { font-size: var(--text-lg); margin: var(--space-8) 0 var(--space-3); }
+  .lead { font-size: var(--text-lg); color: var(--color-ink-muted); max-width: 40rem; }
+  .botao { display: inline-block; background: var(--color-accent); color: var(--color-accent-ink); padding: var(--space-2) var(--space-4); border-radius: var(--radius); text-decoration: none; font-weight: 600; }
+  ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-3) var(--space-6); }
+  .small { font-size: var(--text-sm); color: var(--color-ink-muted); margin-top: var(--space-8); }
+</style>

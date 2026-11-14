@@ -54,6 +54,10 @@ export const ui = {
     'globe.ping.private': 'Ping anônimo',
     'globe.note.countries': 'Estimativas de Ammon (2014), citadas por Hawkins. Não são números oficiais e não devem ser somados com outras fontes.',
     'footer.rights': 'Todos os direitos reservados.',
+    'footer.privacy': 'Política de privacidade',
+    'e404.title': 'Página não encontrada',
+    'e404.text': 'O endereço que você abriu não existe ou mudou de lugar. Volte para o início ou escolha uma seção.',
+    'e404.home': 'Ir para o início', 'e404.sections': 'Seções do site',
   },
   en: {
     'site.name': 'IVG Brasil',
@@ -103,6 +107,10 @@ export const ui = {
     'globe.ping.private': 'Anonymous ping',
     'globe.note.countries': 'Estimates by Ammon (2014), cited by Hawkins. They are not official figures and should not be added to other sources.',
     'footer.rights': 'All rights reserved.',
+    'footer.privacy': 'Privacy policy',
+    'e404.title': 'Page not found',
+    'e404.text': 'The address you opened does not exist or has moved. Go back to the start or pick a section.',
+    'e404.home': 'Go to the home page', 'e404.sections': 'Site sections',
   },
   de: {
     'site.name': 'IVG Brasil',
@@ -152,6 +160,10 @@ export const ui = {
     'globe.ping.private': 'Anonymer Ping',
     'globe.note.countries': 'Schätzungen nach Ammon (2014), zitiert bei Hawkins. Keine amtlichen Zahlen; nicht mit anderen Quellen zusammenrechnen.',
     'footer.rights': 'Alle Rechte vorbehalten.',
+    'footer.privacy': 'Datenschutzerklärung',
+    'e404.title': 'Seite nicht gefunden',
+    'e404.text': 'Die aufgerufene Adresse existiert nicht oder wurde verschoben. Gehen Sie zur Startseite oder wählen Sie einen Bereich.',
+    'e404.home': 'Zur Startseite', 'e404.sections': 'Bereiche der Website',
   },
 } as const;
 

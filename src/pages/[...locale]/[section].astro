@@ -12,7 +12,8 @@ import { getLocale, t } from '@/i18n/utils';
 import { getLocalized } from '@/lib/content';
 import { faqPage } from '@/lib/schema';
 export function getStaticPaths() {
-  const pending = sections.filter((s) => s.slug !== 'noticias');
+  // Páginas fora do menu (privacidade) entram aqui para usar o mesmo layout.
+  const pending = [...sections.filter((s) => s.slug !== 'noticias'), { slug: 'privacidade', label: 'footer.privacy' as const }];
   return locales.flatMap((l) => pending.map((s) => ({
     params: { locale: l === defaultLocale ? undefined : l, section: s.slug },
     props: { label: s.label, slug: s.slug },
