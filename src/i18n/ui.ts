@@ -63,6 +63,13 @@ export const ui = {
     'timeline.lead': 'Do primeiro, em Roma, ao XVI, no Rio de Janeiro.',
     'timeline.featured': 'Em destaque',
     'timeline.site': 'Site do congresso',
+    // tarefa 05
+    'search.link': 'Buscar',
+    'search.label': 'O que você procura?',
+    'search.title': 'Buscar no site',
+    'search.lead': 'Procure em todas as páginas e notícias do site.',
+    'search.noscript': 'A busca precisa de JavaScript. Use o menu para navegar pelas seções.',
+    'search.unavailable': 'A busca não carregou. Tente de novo em instantes ou use o menu para navegar pelas seções.',
   },
   en: {
     'site.name': 'IVG Brasil',
@@ -121,6 +128,13 @@ export const ui = {
     'timeline.lead': 'From the first, in Rome, to the XVI, in Rio de Janeiro.',
     'timeline.featured': 'Featured',
     'timeline.site': 'Congress website',
+    // tarefa 05
+    'search.link': 'Search',
+    'search.label': 'What are you looking for?',
+    'search.title': 'Search the site',
+    'search.lead': 'Search every page and news item on the site.',
+    'search.noscript': 'Search needs JavaScript. Use the menu to browse the sections.',
+    'search.unavailable': 'Search did not load. Try again in a moment or use the menu to browse the sections.',
   },
   de: {
     'site.name': 'IVG Brasil',
@@ -179,6 +193,13 @@ export const ui = {
     'timeline.lead': 'Vom ersten Kongress in Rom bis zum XVI. in Rio de Janeiro.',
     'timeline.featured': 'Im Fokus',
     'timeline.site': 'Kongress-Website',
+    // tarefa 05
+    'search.link': 'Suche',
+    'search.label': 'Wonach suchen Sie?',
+    'search.title': 'Website durchsuchen',
+    'search.lead': 'Durchsuchen Sie alle Seiten und Meldungen der Website.',
+    'search.noscript': 'Die Suche braucht JavaScript. Nutzen Sie das Menü, um die Bereiche aufzurufen.',
+    'search.unavailable': 'Die Suche wurde nicht geladen. Versuchen Sie es gleich noch einmal oder nutzen Sie das Menü.',
   },
 } as const;
 

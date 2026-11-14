@@ -21,6 +21,13 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
         <p class="codigo">404</p>
         <h1>{tr('e404.title')}</h1>
         <p class="lead">{tr('e404.text')}</p>
+        <form class="busca" role="search" action={href(l, 'busca')} method="get">
+          <label for={`q-${l}`}>{tr('search.label')}</label>
+          <div class="campo">
+            <input id={`q-${l}`} type="search" name="q" autocomplete="off" />
+            <button type="submit">{tr('search.link')}</button>
+          </div>
+        </form>
         <p><a class="botao" href={href(l)}>{tr('e404.home')}</a></p>
         <h2>{tr('e404.sections')}</h2>
         <ul>
@@ -48,6 +55,13 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
   h1 { font-size: var(--text-2xl); margin: 0 0 var(--space-4); }
   h2 { font-size: var(--text-lg); margin: var(--space-8) 0 var(--space-3); }
   .lead { font-size: var(--text-lg); color: var(--color-ink-muted); max-width: 40rem; }
+  .busca { max-width: 32rem; margin-block: var(--space-6); }
+  .busca label { display: block; font-weight: 600; margin-bottom: var(--space-2); }
+  .campo { display: flex; gap: var(--space-2); }
+  .campo input { flex: 1; min-width: 0; min-height: 2.75rem; padding: var(--space-2) var(--space-3); font: inherit; color: var(--color-ink); background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius); }
+  .campo button { min-height: 2.75rem; padding: var(--space-2) var(--space-4); font: inherit; font-weight: 600; color: var(--color-accent-ink); background: var(--color-accent); border: 1px solid var(--color-accent); border-radius: var(--radius); cursor: pointer; }
+  .campo button:hover { background: var(--color-ink); border-color: var(--color-ink); }
+  .campo input:focus-visible, .campo button:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 2px; }
   .botao { display: inline-block; background: var(--color-accent); color: var(--color-accent-ink); padding: var(--space-2) var(--space-4); border-radius: var(--radius); text-decoration: none; font-weight: 600; }
   ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-3) var(--space-6); }
   .small { font-size: var(--text-sm); color: var(--color-ink-muted); margin-top: var(--space-8); }

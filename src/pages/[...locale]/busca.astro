@@ -1,0 +1,112 @@
+---
+// Busca do site (tarefa 05). O índice é gerado pelo Pagefind depois do build
+// (`pagefind --site dist`) e separado por idioma pelo `lang` do <html>:
+// em /en/busca/ só aparecem páginas em inglês, e assim por diante.
+// Em `npm run dev` o índice não existe; a página mostra o aviso de indisponível.
+import Base from '@/layouts/Base.astro';
+import { localeParams } from '@/i18n/paths';
+import { getLocale, t } from '@/i18n/utils';
+
+export function getStaticPaths() { return localeParams; }
+
+const locale = getLocale(Astro.url);
+const tr = t(locale);
+const pasta = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/pagefind/`;
+---
+<Base title={tr('search.title')} description={tr('search.lead')} indexar={false}>
+  <link rel="stylesheet" href={`${pasta}pagefind-ui.css`} />
+  <section class="busca" aria-labelledby="busca-titulo">
+    <h1 id="busca-titulo">{tr('search.title')}</h1>
+    <p class="lead">{tr('search.lead')}</p>
+    <div id="busca" data-pasta={pasta} data-indisponivel={tr('search.unavailable')} data-rotulo={tr('search.label')}></div>
+    <noscript><p class="aviso">{tr('search.noscript')}</p></noscript>
+  </section>
+</Base>
+
+<script>
+  type PagefindUIType = new (opts: Record<string, unknown>) => { triggerSearch: (termo: string) => void };
+
+  const alvo = document.getElementById('busca');
+  if (alvo) iniciar(alvo);
+
+  function iniciar(alvo: HTMLElement) {
+    const pasta = alvo.dataset.pasta ?? '/pagefind/';
+    const falhou = () => {
+      const p = document.createElement('p');
+      p.className = 'aviso';
+      p.setAttribute('role', 'status');
+      p.textContent = alvo.dataset.indisponivel ?? '';
+      alvo.replaceChildren(p);
+    };
+    const s = document.createElement('script');
+    s.src = `${pasta}pagefind-ui.js`;
+    s.onerror = falhou;
+    s.onload = () => {
+      const PagefindUI = (window as unknown as { PagefindUI?: PagefindUIType }).PagefindUI;
+      if (!PagefindUI) return falhou();
+      const ui = new PagefindUI({
+        element: '#busca',
+        bundlePath: pasta,
+        showImages: false,
+        showSubResults: true,
+        resetStyles: false,
+        autofocus: true,
+      });
+      rotular(alvo);
+      // Permite links do tipo /busca/?q=termo (por exemplo, a partir da página 404).
+      const termo = new URLSearchParams(location.search).get('q');
+      if (termo) ui.triggerSearch(termo);
+    };
+    document.head.append(s);
+  }
+
+  // O campo do Pagefind só tem rótulo invisível; acrescenta um rótulo visível ligado a ele.
+  function rotular(alvo: HTMLElement) {
+    const aplicar = () => {
+      const campo = alvo.querySelector<HTMLInputElement>('.pagefind-ui__search-input');
+      if (!campo) return false;
+      campo.id = 'busca-campo';
+      const rotulo = document.createElement('label');
+      rotulo.className = 'rotulo';
+      rotulo.htmlFor = campo.id;
+      rotulo.textContent = alvo.dataset.rotulo ?? '';
+      campo.closest('form')?.before(rotulo);
+      return true;
+    };
+    if (aplicar()) return;
+    const obs = new MutationObserver(() => { if (aplicar()) obs.disconnect(); });
+    obs.observe(alvo, { childList: true, subtree: true });
+  }
+</script>
+
+<style>
+  .busca { max-width: 44rem; margin-block: var(--space-12) var(--space-16); }
+  .busca h1 { font-size: var(--text-2xl); margin: 0 0 var(--space-3); }
+  .lead { color: var(--color-ink-muted); margin: 0 0 var(--space-8); }
+  .aviso { color: var(--color-ink-muted); }
+  .busca :global(.rotulo) { display: block; font-weight: 600; margin-bottom: var(--space-2); }
+
+  /* A interface padrão do Pagefind, com as variáveis dos tokens. */
+  .busca :global(#busca) {
+    --pagefind-ui-scale: 0.9;
+    --pagefind-ui-primary: var(--color-accent);
+    --pagefind-ui-text: var(--color-ink);
+    --pagefind-ui-background: var(--color-surface);
+    --pagefind-ui-border: var(--color-line);
+    --pagefind-ui-tag: var(--color-paper);
+    --pagefind-ui-border-width: 1px;
+    --pagefind-ui-border-radius: var(--radius);
+    --pagefind-ui-font: var(--font-sans);
+  }
+  .busca :global(.pagefind-ui__search-input:focus-visible),
+  .busca :global(.pagefind-ui__search-clear:focus-visible),
+  .busca :global(.pagefind-ui__button:focus-visible),
+  .busca :global(.pagefind-ui__result-link:focus-visible) { outline: 3px solid var(--color-focus); outline-offset: 2px; }
+  .busca :global(.pagefind-ui__search-input),
+  .busca :global(.pagefind-ui__search-clear) { font-family: var(--font-sans); }
+  .busca :global(.pagefind-ui__result-link) { color: var(--color-ink); }
+  .busca :global(.pagefind-ui__result-link:hover) { color: var(--color-accent); }
+  .busca :global(.pagefind-ui__result-excerpt),
+  .busca :global(.pagefind-ui__message) { color: var(--color-ink-muted); }
+  .busca :global(mark) { background: none; color: var(--color-ink); font-weight: 700; text-decoration: underline; text-decoration-color: var(--color-accent); text-underline-offset: 3px; }
+</style>
