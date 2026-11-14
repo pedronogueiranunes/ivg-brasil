@@ -1,0 +1,145 @@
+{
+  "fonte": "Hawkins, J. A. «German», capítulo de livro (eScholarship), com estimativas de Ammon (2014), Die Stellung der deutschen Sprache in der Welt",
+  "fonteUrl": "https://escholarship.org/content/qt2cb8w2c8/qt2cb8w2c8_noSplash_0fd78b7361cb8841d2949b3dd865bf72.pdf",
+  "observacao": "Estimativas aproximadas de falantes de alemao (L1 nos paises de lingua oficial; comunidades nos demais). Nao somar com outras fontes. Revisar antes de publicar.",
+  "paises": [
+    {
+      "iso2": "DE",
+      "iso3166num": "276",
+      "falantes": 74430000,
+      "nota": "oficial"
+    },
+    {
+      "iso2": "AT",
+      "iso3166num": "040",
+      "falantes": 7450000,
+      "nota": "oficial"
+    },
+    {
+      "iso2": "CH",
+      "iso3166num": "756",
+      "falantes": 5160000,
+      "nota": "oficial"
+    },
+    {
+      "iso2": "LI",
+      "iso3166num": "438",
+      "falantes": 32075,
+      "nota": "oficial"
+    },
+    {
+      "iso2": "BE",
+      "iso3166num": "056",
+      "falantes": 73000,
+      "nota": "oficial"
+    },
+    {
+      "iso2": "LU",
+      "iso3166num": "442",
+      "falantes": 12100,
+      "nota": "oficial"
+    },
+    {
+      "iso2": "IT",
+      "iso3166num": "380",
+      "falantes": 324303,
+      "nota": "Tirol do Sul (provincia); o valor nao cobre o resto do pais"
+    },
+    {
+      "iso2": "BR",
+      "iso3166num": "076",
+      "falantes": 1500000,
+      "nota": "minoria; estimativa, ate 3 milhoes se contado o hunsriqueano"
+    },
+    {
+      "iso2": "US",
+      "iso3166num": "840",
+      "falantes": 1100000,
+      "nota": "minoria"
+    },
+    {
+      "iso2": "CA",
+      "iso3166num": "124",
+      "falantes": 430000,
+      "nota": "minoria"
+    },
+    {
+      "iso2": "AR",
+      "iso3166num": "032",
+      "falantes": 400000,
+      "nota": "minoria"
+    },
+    {
+      "iso2": "RU",
+      "iso3166num": "643",
+      "falantes": 394138,
+      "nota": "minoria"
+    },
+    {
+      "iso2": "FR",
+      "iso3166num": "250",
+      "falantes": 210000,
+      "nota": "minoria; alsaciano e franconio da Lorena a parte"
+    },
+    {
+      "iso2": "IL",
+      "iso3166num": "376",
+      "falantes": 200000,
+      "nota": "minoria"
+    },
+    {
+      "iso2": "PY",
+      "iso3166num": "600",
+      "falantes": 166000,
+      "nota": "minoria"
+    },
+    {
+      "iso2": "BO",
+      "iso3166num": "068",
+      "falantes": 160000,
+      "nota": "minoria"
+    },
+    {
+      "iso2": "AU",
+      "iso3166num": "036",
+      "falantes": 79000,
+      "nota": "minoria"
+    },
+    {
+      "iso2": "RO",
+      "iso3166num": "642",
+      "falantes": 36884,
+      "nota": "minoria"
+    },
+    {
+      "iso2": "NZ",
+      "iso3166num": "554",
+      "falantes": 36000,
+      "nota": "minoria"
+    },
+    {
+      "iso2": "CL",
+      "iso3166num": "152",
+      "falantes": 35000,
+      "nota": "minoria"
+    },
+    {
+      "iso2": "UY",
+      "iso3166num": "858",
+      "falantes": 28000,
+      "nota": "minoria"
+    },
+    {
+      "iso2": "NA",
+      "iso3166num": "516",
+      "falantes": 22500,
+      "nota": "minoria"
+    },
+    {
+      "iso2": "ZA",
+      "iso3166num": "710",
+      "falantes": 12000,
+      "nota": "minoria"
+    }
+  ]
+}

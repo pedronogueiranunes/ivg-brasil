@@ -1,0 +1,93 @@
+{
+  "observacao": "Dados ficticios apenas para a interface. Pings reais virao da API (ver docs/globo-pings-api.md).",
+  "pings": [
+    {
+      "id": "p01",
+      "lat": -25.43,
+      "lng": -49.27,
+      "publico": true,
+      "nome": "Pessoa de exemplo A",
+      "instituicao": "UFPR",
+      "papel": "Professora",
+      "mensagem": "Primeira vez no congresso.",
+      "exemplo": true
+    },
+    {
+      "id": "p02",
+      "lat": -22.9,
+      "lng": -43.2,
+      "publico": true,
+      "nome": "Pessoa de exemplo B",
+      "instituicao": "UERJ",
+      "papel": "Doutoranda",
+      "mensagem": "Apresentei um trabalho aqui.",
+      "exemplo": true
+    },
+    {
+      "id": "p03",
+      "lat": -29.7,
+      "lng": -51.1,
+      "publico": false,
+      "nome": null,
+      "instituicao": null,
+      "papel": null,
+      "mensagem": null,
+      "exemplo": true
+    },
+    {
+      "id": "p04",
+      "lat": 52.5,
+      "lng": 13.4,
+      "publico": true,
+      "nome": "Pessoa de exemplo C",
+      "instituicao": "Universidade de exemplo",
+      "papel": "Pesquisador",
+      "mensagem": "Estágio de pesquisa em 2024.",
+      "exemplo": true
+    },
+    {
+      "id": "p05",
+      "lat": 48.2,
+      "lng": 16.4,
+      "publico": false,
+      "nome": null,
+      "instituicao": null,
+      "papel": null,
+      "mensagem": null,
+      "exemplo": true
+    },
+    {
+      "id": "p06",
+      "lat": 47.1,
+      "lng": 15.4,
+      "publico": true,
+      "nome": "Pessoa de exemplo D",
+      "instituicao": null,
+      "papel": "Estudante",
+      "mensagem": "Graz, 2025.",
+      "exemplo": true
+    },
+    {
+      "id": "p07",
+      "lat": 31.2,
+      "lng": 121.5,
+      "publico": false,
+      "nome": null,
+      "instituicao": null,
+      "papel": null,
+      "mensagem": null,
+      "exemplo": true
+    },
+    {
+      "id": "p08",
+      "lat": -34.6,
+      "lng": -58.4,
+      "publico": true,
+      "nome": "Pessoa de exemplo E",
+      "instituicao": "Instituição de exemplo",
+      "papel": "Professor",
+      "mensagem": "Encontro de professores.",
+      "exemplo": true
+    }
+  ]
+}

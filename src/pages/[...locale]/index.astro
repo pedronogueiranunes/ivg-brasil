@@ -2,6 +2,7 @@
 import Base from '@/layouts/Base.astro';
 import NewsCard from '@/components/NewsCard.astro';
 import LangNotice from '@/components/LangNotice.astro';
+import Globo from '@/components/Globo.astro';
 import { getCollection } from 'astro:content';
 import { getLocale, t, href } from '@/i18n/utils';
 import { localeParams } from '@/i18n/paths';
@@ -29,6 +30,8 @@ const siteUrl = new URL(href('pt'), Astro.site).toString();
         <a class="btn" href={href(locale, h.botao2Link)}>{h.botao2Texto}</a>
       </p>
     </section>
+
+    <Globo locale={locale} />
 
     <section aria-labelledby="perfis">
       <h2 id="perfis">{h.perfisTitulo}</h2>
