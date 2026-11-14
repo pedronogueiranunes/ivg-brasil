@@ -14,10 +14,12 @@ interface Props {
   jsonLd?: object | object[];
   /** Sem cabeçalho e rodapé padrão (usado pela 404, que escolhe o idioma no navegador). */
   bare?: boolean;
+  /** Entra no índice da busca (Pagefind). Desligado na 404 e na própria página de busca. */
+  indexar?: boolean;
 }
 const locale = getLocale(Astro.url);
 const tr = t(locale);
-const { title, seoTitle, description = tr('home.lead'), jsonLd, bare = false } = Astro.props;
+const { title, seoTitle, description = tr('home.lead'), jsonLd, bare = false, indexar = !bare } = Astro.props;
 const fullTitle = seoTitle ?? (title ? `${title} · ${tr('site.name')}` : `${tr('site.name')} · ${tr('site.tagline')}`);
 const canonical = new URL(Astro.url.pathname, Astro.site);
 // Staging (com subpasta) e qualquer build com PUBLIC_NOINDEX=1 ficam fora do Google.
@@ -43,7 +45,7 @@ const ld = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
   </head>
   <body>
     {!bare && <Header />}
-    <main id="conteudo" class="container"><slot /></main>
+    <main id="conteudo" class="container" data-pagefind-body={indexar ? '' : undefined}><slot /></main>
     {!bare && <Footer />}
   </body>
 </html>

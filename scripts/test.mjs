@@ -20,6 +20,9 @@ if (!pular) {
     env: { ...process.env, BASE_PATH: '/', SITE_URL: 'http://localhost' },
   });
   if (build.status !== 0) process.exit(build.status ?? 1);
+  // Índice da busca (tarefa 05), como no `npm run build`.
+  const indice = spawnSync('npx', ['pagefind', '--site', OUT], { stdio: 'inherit' });
+  if (indice.status !== 0) process.exit(indice.status ?? 1);
 }
 
 const tipos = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript', '.svg': 'image/svg+xml', '.xml': 'application/xml', '.txt': 'text/plain', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.woff2': 'font/woff2' };
@@ -70,7 +73,7 @@ const primeiraNoticia = () => {
   const pasta = readdirSync(dir).find((n) => statSync(join(dir, n)).isDirectory());
   return pasta ? `noticias/${pasta}/` : null;
 };
-const modelos = ['', 'noticias/', primeiraNoticia(), 'agenda/'].filter((m) => m !== null);
+const modelos = ['', 'noticias/', primeiraNoticia(), 'agenda/', 'busca/'].filter((m) => m !== null);
 const paginas = [];
 for (const modelo of modelos) {
   for (const loc of LOCALES) {
@@ -84,6 +87,8 @@ for (const p of paginas) {
   const contexto = await navegador.newContext();
   const pagina = await contexto.newPage();
   await pagina.goto(origem + p);
+  // A página de busca monta a interface do Pagefind depois do carregamento.
+  if (p.endsWith('busca/')) await pagina.waitForSelector('.pagefind-ui__search-input', { timeout: 10000 });
   const { violations } = await new AxeBuilder({ page: pagina }).analyze();
   const graves = violations.filter((v) => IMPACTOS.includes(v.impact ?? ''));
   console.log(`${graves.length ? 'FALHOU' : 'ok    '} ${p}  (${violations.length} avisos, ${graves.length} graves)`);

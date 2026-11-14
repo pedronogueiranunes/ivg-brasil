@@ -58,6 +58,13 @@ export const ui = {
     'e404.title': 'Página não encontrada',
     'e404.text': 'O endereço que você abriu não existe ou mudou de lugar. Volte para o início ou escolha uma seção.',
     'e404.home': 'Ir para o início', 'e404.sections': 'Seções do site',
+    // tarefa 05
+    'search.link': 'Buscar',
+    'search.label': 'O que você procura?',
+    'search.title': 'Buscar no site',
+    'search.lead': 'Procure em todas as páginas e notícias do site.',
+    'search.noscript': 'A busca precisa de JavaScript. Use o menu para navegar pelas seções.',
+    'search.unavailable': 'A busca não carregou. Tente de novo em instantes ou use o menu para navegar pelas seções.',
   },
   en: {
     'site.name': 'IVG Brasil',
@@ -111,6 +118,13 @@ export const ui = {
     'e404.title': 'Page not found',
     'e404.text': 'The address you opened does not exist or has moved. Go back to the start or pick a section.',
     'e404.home': 'Go to the home page', 'e404.sections': 'Site sections',
+    // tarefa 05
+    'search.link': 'Search',
+    'search.label': 'What are you looking for?',
+    'search.title': 'Search the site',
+    'search.lead': 'Search every page and news item on the site.',
+    'search.noscript': 'Search needs JavaScript. Use the menu to browse the sections.',
+    'search.unavailable': 'Search did not load. Try again in a moment or use the menu to browse the sections.',
   },
   de: {
     'site.name': 'IVG Brasil',
@@ -164,6 +178,13 @@ export const ui = {
     'e404.title': 'Seite nicht gefunden',
     'e404.text': 'Die aufgerufene Adresse existiert nicht oder wurde verschoben. Gehen Sie zur Startseite oder wählen Sie einen Bereich.',
     'e404.home': 'Zur Startseite', 'e404.sections': 'Bereiche der Website',
+    // tarefa 05
+    'search.link': 'Suche',
+    'search.label': 'Wonach suchen Sie?',
+    'search.title': 'Website durchsuchen',
+    'search.lead': 'Durchsuchen Sie alle Seiten und Meldungen der Website.',
+    'search.noscript': 'Die Suche braucht JavaScript. Nutzen Sie das Menü, um die Bereiche aufzurufen.',
+    'search.unavailable': 'Die Suche wurde nicht geladen. Versuchen Sie es gleich noch einmal oder nutzen Sie das Menü.',
   },
 } as const;
 
