@@ -2,7 +2,8 @@
 // Importa cursos de um CSV para a coleção `cursos` (tarefa 12).
 //
 // Uso:
-//   node scripts/importar-cursos.mjs <arquivo.csv> [--force] [--sem-geo] [--destino <pasta>]
+//   node scripts/importar-cursos.mjs <arquivo.csv> [--force] [--sem-geo] [--completar-geo] [--destino <pasta>]
+//   node scripts/importar-cursos.mjs --completar-geo [--destino <pasta>]
 //
 // Colunas do CSV: instituicao, cidade, uf, nivel, modalidade, link
 // (separadas por vírgula ou por ponto e vírgula, como o Excel exporta em português).
@@ -13,7 +14,11 @@
 // - Arquivo que já existe não é tocado, a não ser com --force. Rodar de novo não duplica nada.
 // - Latitude e longitude vêm do Nominatim (OpenStreetMap) pela cidade, no máximo 1 pedido
 //   por segundo, com cache em scripts/.cache-geo.json. --sem-geo pula essa etapa.
+//   O cache é versionado de propósito: quem importar depois não repete as consultas.
 //   Para identificar o projeto ao Nominatim com um e-mail, use NOMINATIM_EMAIL=...
+// - --completar-geo acrescenta lat e lng só aos arquivos que ainda não têm posição (curso criado
+//   com a rede fora do ar, ou cadastrado no painel). Não mexe em mais nada do arquivo, então
+//   as edições feitas no Keystatic ficam. Sem CSV, varre todos os arquivos da pasta.
 //   Os campos seguem o schema em src/content.config.ts e keystatic.config.ts.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -41,11 +46,13 @@ const COLUNAS = ['instituicao', 'cidade', 'uf', 'nivel', 'modalidade', 'link'];
 const args = process.argv.slice(2);
 const force = args.includes('--force');
 const semGeo = args.includes('--sem-geo');
+const completarGeo = args.includes('--completar-geo');
 const iDestino = args.indexOf('--destino');
 const destino = iDestino >= 0 ? resolve(args[iDestino + 1] ?? '') : join(RAIZ, 'src', 'content', 'cursos', 'pt');
 const arquivo = args.find((a, i) => !a.startsWith('--') && i !== iDestino + 1);
-if (!arquivo) {
-  console.error('Uso: node scripts/importar-cursos.mjs <arquivo.csv> [--force] [--sem-geo] [--destino <pasta>]');
+if (!arquivo && !completarGeo) {
+  console.error('Uso: node scripts/importar-cursos.mjs <arquivo.csv> [--force] [--sem-geo] [--completar-geo] [--destino <pasta>]');
+  console.error('     node scripts/importar-cursos.mjs --completar-geo [--destino <pasta>]');
   process.exit(2);
 }
 
@@ -136,61 +143,104 @@ async function coordenadas(cidade, uf) {
   }
 }
 
+// ---------- importação do CSV ----------
+async function importar() {
+  const linhas = lerCsv(readFileSync(resolve(arquivo), 'utf8'));
+  if (!linhas.length) { console.error('CSV vazio.'); process.exit(1); }
+  const cabecalho = linhas[0].map((c) => chave(c));
+  const faltam = COLUNAS.filter((c) => !cabecalho.includes(c));
+  if (faltam.length) {
+    console.error(`Faltam colunas no CSV: ${faltam.join(', ')}. Esperado: ${COLUNAS.join(', ')}.`);
+    process.exit(1);
+  }
+
+  const erros = [];
+  const cursos = [];
+  linhas.slice(1).forEach((valores, i) => {
+    const reg = Object.fromEntries(cabecalho.map((c, j) => [c, valores[j]]));
+    const { curso, erro } = normalizar(reg);
+    if (erro) erros.push(`linha ${i + 2}: ${erro}`);
+    else cursos.push({ ...curso, linha: i + 2 });
+  });
+
+  // Nomes de arquivo estáveis: a mesma linha gera sempre o mesmo nome.
+  const usados = new Map();
+  for (const c of cursos) {
+    // Linha igual a outra já vista (mesma instituição, nível e modalidade) é repetição, não um curso novo.
+    const repetida = [...usados.values()].find((o) => o.instituicao === c.instituicao && o.nivel === c.nivel && o.modalidade === c.modalidade);
+    if (repetida) { erros.push(`linha ${c.linha}: curso repetido (igual à linha ${repetida.linha})`); c.ignorar = true; continue; }
+    const candidatos = [slug(c.instituicao), slug(`${c.instituicao} ${c.nivel}`), slug(`${c.instituicao} ${c.nivel} ${c.modalidade}`)];
+    const base = candidatos.find((n) => !usados.has(n)) ?? `${candidatos[2]}-${c.linha}`;
+    usados.set(base, c);
+    c.arquivo = `${base}.yaml`;
+  }
+
+  mkdirSync(destino, { recursive: true });
+  let criados = 0, atualizados = 0, mantidos = 0;
+  for (const c of cursos) {
+    if (c.ignorar) continue;
+    const caminho = join(destino, c.arquivo);
+    const existe = existsSync(caminho);
+    if (existe && !force) { mantidos++; continue; }
+    const pos = await coordenadas(c.cidade, c.uf);
+    const conteudo = [
+      `instituicao: ${yaml(c.instituicao)}`,
+      `cidade: ${yaml(c.cidade)}`,
+      `uf: ${c.uf}`,
+      `nivel: ${c.nivel}`,
+      `modalidade: ${c.modalidade}`,
+      `link: ${yaml(c.link)}`,
+      ...(pos ? [`lat: ${pos.lat}`, `lng: ${pos.lng}`] : []),
+    ].join('\n') + '\n';
+    if (existe && readFileSync(caminho, 'utf8') === conteudo) { mantidos++; continue; }
+    writeFileSync(caminho, conteudo);
+    existe ? atualizados++ : criados++;
+    console.log(`${existe ? 'atualizado' : 'criado    '} ${caminho.replace(RAIZ + '/', '')}${pos ? '' : '  (sem posição no mapa)'}`);
+  }
+
+  console.log(`\n${criados} criado(s), ${atualizados} atualizado(s), ${mantidos} sem mudança${force ? '' : ' (use --force para reescrever os que já existem)'}.`);
+  return erros;
+}
+
+// ---------- --completar-geo ----------
+const valorDe = (texto, campo) => {
+  const m = texto.match(new RegExp(`^${campo}:[ \\t]*(.*?)[ \\t]*$`, 'm'));
+  if (!m) return '';
+  const v = m[1];
+  if (v.startsWith('"')) { try { return JSON.parse(v); } catch { return v.slice(1, -1); } }
+  if (v.startsWith("'")) return v.slice(1, -1).replace(/''/g, "'");
+  return v;
+};
+const vazio = (v) => v === '' || v === 'null' || v === '~';
+
+/** Acrescenta (ou preenche) lat e lng num arquivo que não os tem, sem tocar no resto. */
+async function completar() {
+  const { readdirSync } = await import('node:fs');
+  if (!existsSync(destino)) { console.log(`Pasta ${destino} não existe; nada a completar.`); return; }
+  let completados = 0, semPosicao = 0, jaTinham = 0;
+  for (const nome of readdirSync(destino).filter((n) => n.endsWith('.yaml')).sort()) {
+    const caminho = join(destino, nome);
+    const texto = readFileSync(caminho, 'utf8');
+    if (!vazio(valorDe(texto, 'lat')) && !vazio(valorDe(texto, 'lng'))) { jaTinham++; continue; }
+    const cidade = valorDe(texto, 'cidade').trim();
+    const uf = valorDe(texto, 'uf').trim().toUpperCase();
+    const pos = UFS[uf] ? await coordenadas(cidade, uf) : null;
+    if (!pos) { semPosicao++; console.log(`sem posição  ${nome}${cidade ? '' : '  (sem cidade)'}`); continue; }
+    let novo = texto.endsWith('\n') ? texto : texto + '\n';
+    for (const [campo, v] of [['lat', pos.lat], ['lng', pos.lng]]) {
+      const linha = new RegExp(`^${campo}:.*$`, 'm');
+      novo = linha.test(novo) ? novo.replace(linha, `${campo}: ${v}`) : novo + `${campo}: ${v}\n`;
+    }
+    writeFileSync(caminho, novo);
+    completados++;
+    console.log(`completado   ${nome}  (${pos.lat}, ${pos.lng})`);
+  }
+  console.log(`\n${completados} completado(s), ${semPosicao} sem posição, ${jaTinham} já tinham posição.`);
+}
+
 // ---------- principal ----------
-const linhas = lerCsv(readFileSync(resolve(arquivo), 'utf8'));
-if (!linhas.length) { console.error('CSV vazio.'); process.exit(1); }
-const cabecalho = linhas[0].map((c) => chave(c));
-const faltam = COLUNAS.filter((c) => !cabecalho.includes(c));
-if (faltam.length) {
-  console.error(`Faltam colunas no CSV: ${faltam.join(', ')}. Esperado: ${COLUNAS.join(', ')}.`);
-  process.exit(1);
-}
-
-const erros = [];
-const cursos = [];
-linhas.slice(1).forEach((valores, i) => {
-  const reg = Object.fromEntries(cabecalho.map((c, j) => [c, valores[j]]));
-  const { curso, erro } = normalizar(reg);
-  if (erro) erros.push(`linha ${i + 2}: ${erro}`);
-  else cursos.push({ ...curso, linha: i + 2 });
-});
-
-// Nomes de arquivo estáveis: a mesma linha gera sempre o mesmo nome.
-const usados = new Map();
-for (const c of cursos) {
-  // Linha igual a outra já vista (mesma instituição, nível e modalidade) é repetição, não um curso novo.
-  const repetida = [...usados.values()].find((o) => o.instituicao === c.instituicao && o.nivel === c.nivel && o.modalidade === c.modalidade);
-  if (repetida) { erros.push(`linha ${c.linha}: curso repetido (igual à linha ${repetida.linha})`); c.ignorar = true; continue; }
-  const candidatos = [slug(c.instituicao), slug(`${c.instituicao} ${c.nivel}`), slug(`${c.instituicao} ${c.nivel} ${c.modalidade}`)];
-  const base = candidatos.find((n) => !usados.has(n)) ?? `${candidatos[2]}-${c.linha}`;
-  usados.set(base, c);
-  c.arquivo = `${base}.yaml`;
-}
-
-mkdirSync(destino, { recursive: true });
-let criados = 0, atualizados = 0, mantidos = 0;
-for (const c of cursos) {
-  if (c.ignorar) continue;
-  const caminho = join(destino, c.arquivo);
-  const existe = existsSync(caminho);
-  if (existe && !force) { mantidos++; continue; }
-  const pos = await coordenadas(c.cidade, c.uf);
-  const conteudo = [
-    `instituicao: ${yaml(c.instituicao)}`,
-    `cidade: ${yaml(c.cidade)}`,
-    `uf: ${c.uf}`,
-    `nivel: ${c.nivel}`,
-    `modalidade: ${c.modalidade}`,
-    `link: ${yaml(c.link)}`,
-    ...(pos ? [`lat: ${pos.lat}`, `lng: ${pos.lng}`] : []),
-  ].join('\n') + '\n';
-  if (existe && readFileSync(caminho, 'utf8') === conteudo) { mantidos++; continue; }
-  writeFileSync(caminho, conteudo);
-  existe ? atualizados++ : criados++;
-  console.log(`${existe ? 'atualizado' : 'criado    '} ${caminho.replace(RAIZ + '/', '')}${pos ? '' : '  (sem posição no mapa)'}`);
-}
-
-console.log(`\n${criados} criado(s), ${atualizados} atualizado(s), ${mantidos} sem mudança${force ? '' : ' (use --force para reescrever os que já existem)'}.`);
+const erros = arquivo ? await importar() : [];
+if (completarGeo) await completar();
 if (erros.length) {
   console.log(`\n${erros.length} linha(s) com problema, não importada(s):`);
   erros.sort((x, y) => Number(x.match(/\d+/)[0]) - Number(y.match(/\d+/)[0]));
