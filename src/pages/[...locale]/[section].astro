@@ -4,6 +4,7 @@
 // Para uma seção com layout próprio, crie src/pages/[...locale]/<slug>/index.astro e tire o slug daqui.
 import Base from '@/layouts/Base.astro';
 import Faq from '@/components/Faq.astro';
+import CongressTimeline from '@/components/CongressTimeline.astro';
 import LangNotice from '@/components/LangNotice.astro';
 import { render } from 'astro:content';
 import { sections } from '@/i18n/nav';
@@ -41,6 +42,7 @@ const faq = page?.data.faq ?? [];
       <h1>{page.data.titulo}</h1>
       {page.data.intro && <p class="lead">{page.data.intro}</p>}
       <div class="prose">{Content && <Content />}</div>
+      {(slug === 'sobre' || slug === 'rio2030') && <CongressTimeline locale={locale} />}
       <Faq items={faq} locale={found?.fallback ? defaultLocale : locale} />
       </div>
     </article>

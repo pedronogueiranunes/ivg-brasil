@@ -58,6 +58,11 @@ export const ui = {
     'e404.title': 'Página não encontrada',
     'e404.text': 'O endereço que você abriu não existe ou mudou de lugar. Volte para o início ou escolha uma seção.',
     'e404.home': 'Ir para o início', 'e404.sections': 'Seções do site',
+    // tarefa 10
+    'timeline.title': 'Os congressos da IVG',
+    'timeline.lead': 'Do primeiro, em Roma, ao XVI, no Rio de Janeiro.',
+    'timeline.featured': 'Em destaque',
+    'timeline.site': 'Site do congresso',
   },
   en: {
     'site.name': 'IVG Brasil',
@@ -111,6 +116,11 @@ export const ui = {
     'e404.title': 'Page not found',
     'e404.text': 'The address you opened does not exist or has moved. Go back to the start or pick a section.',
     'e404.home': 'Go to the home page', 'e404.sections': 'Site sections',
+    // tarefa 10
+    'timeline.title': 'IVG congresses',
+    'timeline.lead': 'From the first, in Rome, to the XVI, in Rio de Janeiro.',
+    'timeline.featured': 'Featured',
+    'timeline.site': 'Congress website',
   },
   de: {
     'site.name': 'IVG Brasil',
@@ -164,6 +174,11 @@ export const ui = {
     'e404.title': 'Seite nicht gefunden',
     'e404.text': 'Die aufgerufene Adresse existiert nicht oder wurde verschoben. Gehen Sie zur Startseite oder wählen Sie einen Bereich.',
     'e404.home': 'Zur Startseite', 'e404.sections': 'Bereiche der Website',
+    // tarefa 10
+    'timeline.title': 'Die IVG-Kongresse',
+    'timeline.lead': 'Vom ersten Kongress in Rom bis zum XVI. in Rio de Janeiro.',
+    'timeline.featured': 'Im Fokus',
+    'timeline.site': 'Kongress-Website',
   },
 } as const;
 

@@ -1,0 +1,119 @@
+---
+// Linha do tempo dos congressos da IVG (F08, F27). Lista ordenada semântica; o desenho é só CSS.
+// Os dados vêm da coleção "congressos" (hoje só em PT). Um prefixo entre colchetes em "edicao",
+// como [Conferir] ou [Exemplo], vira uma marca discreta ao lado do título.
+import { getCollection } from 'astro:content';
+import { t } from '@/i18n/utils';
+import { defaultLocale, type Locale } from '@/i18n/ui';
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+const tr = t(locale);
+
+const congressos = (await getCollection('congressos'))
+  .sort((a, b) => a.data.ano - b.data.ano)
+  .map(({ id, data }) => {
+    const m = data.edicao.match(/^\[([^\]]+)\]\s*(.*)$/);
+    return { id, ...data, marca: m?.[1], titulo: m ? m[2] : data.edicao };
+  });
+// O texto dos congressos só existe em português. Nas outras línguas ele é marcado como tal.
+const dadosLang = locale === defaultLocale ? undefined : 'pt-BR';
+---
+{congressos.length > 0 && (
+  <section class="linha-do-tempo" aria-labelledby="linha-do-tempo-titulo" lang={locale}>
+    <h2 id="linha-do-tempo-titulo">{tr('timeline.title')}</h2>
+    <p class="lead">{tr('timeline.lead')}</p>
+    <ol lang={dadosLang}>
+      {congressos.map((c) => (
+        <li class:list={{ destaque: c.destaque }}>
+          <time class="ano" datetime={String(c.ano)}>{c.ano}</time>
+          <div class="conteudo">
+            <p class="titulo">
+              {c.destaque && <span class="sr-only" lang={locale}>{tr('timeline.featured')}: </span>}
+              {c.titulo}
+              {c.marca && <span class="marca">{c.marca}</span>}
+            </p>
+            {(c.cidade || c.pais) && <p class="onde">{[c.cidade, c.pais].filter(Boolean).join(', ')}</p>}
+            {c.tema && <p class="tema">{c.tema}</p>}
+            {c.link && <p class="site"><a href={c.link} rel="noopener">{tr('timeline.site')}</a></p>}
+          </div>
+        </li>
+      ))}
+    </ol>
+  </section>
+)}
+<style>
+  .linha-do-tempo { margin-block: var(--space-12); max-width: 44rem; }
+  h2 { font-size: var(--text-xl); margin: 0 0 var(--space-2); }
+  .lead { margin: 0 0 var(--space-8); color: var(--color-ink-muted); }
+
+  ol {
+    --ano-w: 4.5rem; --eixo-w: 1.5rem; --vao: var(--space-4);
+    --eixo-x: calc(var(--ano-w) + var(--vao) + var(--eixo-w) / 2);
+    list-style: none; margin: 0; padding: 0;
+  }
+  li {
+    position: relative;
+    display: grid;
+    grid-template-columns: var(--ano-w) var(--eixo-w) minmax(0, 1fr);
+    grid-template-areas: "ano eixo conteudo";
+    column-gap: var(--vao);
+    padding-bottom: var(--space-8);
+  }
+  li:last-child { padding-bottom: 0; }
+
+  /* Eixo: uma linha de 1px que atravessa o item, e um ponto no nível do ano. */
+  li::before {
+    content: ''; position: absolute; top: 0; bottom: 0; left: var(--eixo-x);
+    width: 1px; background: var(--color-line);
+  }
+  li:first-child::before { top: 0.8rem; }
+  li:last-child::before { bottom: auto; height: 0.8rem; }
+  li:only-child::before { display: none; }
+  li::after {
+    content: ''; position: absolute; top: 0.45rem; left: var(--eixo-x);
+    width: 0.75rem; height: 0.75rem; transform: translateX(-50%);
+    border: 2px solid var(--color-ink); border-radius: 50%; background: var(--color-paper);
+  }
+
+  .ano {
+    grid-area: ano;
+    font-family: var(--font-display); font-weight: 700; font-size: var(--text-lg); line-height: 1.3;
+    font-variant-numeric: tabular-nums; text-align: right;
+  }
+  .conteudo { grid-area: conteudo; min-width: 0; padding-top: 0.1rem; }
+  .conteudo p { margin: 0; }
+  .titulo { font-weight: 600; overflow-wrap: anywhere; }
+  .onde { color: var(--color-ink-muted); font-size: var(--text-sm); margin-top: var(--space-1); }
+  .tema { margin-top: var(--space-2); max-width: 36rem; }
+  .site { margin-top: var(--space-2); font-size: var(--text-sm); }
+  .marca {
+    display: inline-block; margin-left: var(--space-2); padding: 0 var(--space-2);
+    border: 1px solid var(--color-line); border-radius: var(--radius);
+    font-size: var(--text-sm); font-weight: 400; color: var(--color-ink-muted); white-space: nowrap;
+  }
+
+  /* Congresso em destaque (Rio 2030): ponto cheio, ano maior e o texto num painel. */
+  .destaque .ano { color: var(--color-accent); font-size: var(--text-xl); line-height: 1.2; }
+  .destaque::after { top: 0.55rem; width: 1rem; height: 1rem; border-color: var(--color-accent); background: var(--color-accent); }
+  .destaque::before { background: var(--color-accent); }
+  .destaque .conteudo {
+    background: var(--color-surface); border: 1px solid var(--color-accent); border-radius: var(--radius);
+    padding: var(--space-4) var(--space-6);
+  }
+  .destaque .titulo { font-size: var(--text-lg); }
+  .destaque:last-child::before { height: 1.05rem; }
+
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  /* Celular, e também zoom de 200%: o eixo vai para a esquerda e o ano fica acima do texto. */
+  @media (max-width: 40rem) {
+    ol { --eixo-x: calc(var(--eixo-w) / 2); }
+    li {
+      grid-template-columns: var(--eixo-w) minmax(0, 1fr);
+      grid-template-areas: "eixo ano" "eixo conteudo";
+    }
+    .ano { text-align: left; }
+    .conteudo { padding-top: var(--space-1); }
+    .destaque .conteudo { padding: var(--space-3) var(--space-4); }
+  }
+</style>
