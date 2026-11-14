@@ -7,8 +7,12 @@ const seo = {
   seoTitulo: fields.text({ label: 'Título para o Google', description: 'Até 65 caracteres. Se ficar vazio, usa o título da página.', validation: { length: { max: 70 } } }),
   seoDescricao: fields.text({ label: 'Descrição para o Google', description: 'Até 160 caracteres. Aparece abaixo do título nos resultados de busca.', multiline: true, validation: { length: { max: 170 } } }),
 };
+// Local em dev; Keystatic Cloud no Cloudflare Pages. O nome do projeto (equipe/projeto)
+// vem da variável PUBLIC_KEYSTATIC_CLOUD_PROJECT, definida no painel da Cloudflare.
+const cloudProject = import.meta.env.PUBLIC_KEYSTATIC_CLOUD_PROJECT;
 export default config({
-  storage: { kind: 'local' },
+  storage: cloudProject ? { kind: 'cloud' } : { kind: 'local' },
+  ...(cloudProject ? { cloud: { project: cloudProject } } : {}),
   ui: { brand: { name: 'IVG Brasil' } },
   singletons: {
     home: singleton({
