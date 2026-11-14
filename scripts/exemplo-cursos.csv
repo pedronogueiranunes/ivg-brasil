@@ -1,0 +1,6 @@
+instituicao,cidade,uf,nivel,modalidade,link
+[Exemplo] USP,São Paulo,SP,graduacao,presencial,https://www.usp.br/
+[Exemplo] UFRJ,Rio de Janeiro,RJ,graduação,presencial,https://ufrj.br/
+[Exemplo] UFRGS,Porto Alegre,RS,graduacao,presencial,https://www.ufrgs.br/
+[Exemplo] UFSC,Florianópolis,SC,graduacao,presencial,https://ufsc.br/
+"[Exemplo] UFPR, pós-graduação",Curitiba,PR,pós,presencial,https://ufpr.br/
