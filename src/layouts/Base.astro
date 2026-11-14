@@ -18,6 +18,8 @@ const tr = t(locale);
 const { title, seoTitle, description = tr('home.lead'), jsonLd } = Astro.props;
 const fullTitle = seoTitle ?? (title ? `${title} · ${tr('site.name')}` : `${tr('site.name')} · ${tr('site.tagline')}`);
 const canonical = new URL(Astro.url.pathname, Astro.site);
+// Staging (com subpasta) e qualquer build com PUBLIC_NOINDEX=1 ficam fora do Google.
+const noindex = import.meta.env.BASE_URL !== '/' || import.meta.env.PUBLIC_NOINDEX === '1';
 const ld = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
 ---
 <!doctype html>
@@ -34,7 +36,7 @@ const ld = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
     <meta property="og:url" content={canonical} />
-    <meta name="robots" content="noindex" />
+    {noindex && <meta name="robots" content="noindex" />}
     {ld.map((d) => <script type="application/ld+json" set:html={JSON.stringify(d)} />)}
   </head>
   <body>

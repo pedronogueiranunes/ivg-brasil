@@ -3,6 +3,7 @@ import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
 import keystatic from '@keystatic/astro';
 import markdoc from '@astrojs/markdoc';
+import sitemap from '@astrojs/sitemap';
 
 // O painel do Keystatic precisa de servidor. No staging (GitHub Pages, estático)
 // ele fica de fora; localmente, `npm run dev` abre o painel em /keystatic.
@@ -22,5 +23,10 @@ export default defineConfig({
     defaultLocale: 'pt',
     routing: { prefixDefaultLocale: false },
   },
-  integrations: isDev ? [react(), markdoc(), keystatic()] : [react(), markdoc()],
+  integrations: [
+    react(),
+    markdoc(),
+    sitemap({ i18n: { defaultLocale: 'pt', locales: { pt: 'pt-BR', en: 'en', de: 'de' } } }),
+    ...(isDev ? [keystatic()] : []),
+  ],
 });
