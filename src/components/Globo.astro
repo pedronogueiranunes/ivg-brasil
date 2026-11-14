@@ -1,0 +1,403 @@
+---
+// Globo da página inicial: três modos (países, entidades, pings).
+// Os dados vêm de src/data/globo/*.json, cada item com a sua fonte.
+// O globo em si só é carregado quando a seção aparece na tela (ver o script).
+import type { Locale } from '@/i18n/ui';
+import { t } from '@/i18n/utils';
+import paisesJson from '@/data/globo/paises.json';
+import entidadesJson from '@/data/globo/entidades.json';
+import pingsJson from '@/data/globo/pings-exemplo.json';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+const tr = t(locale);
+
+const bcp = locale === 'pt' ? 'pt-BR' : locale;
+const nomePais = new Intl.DisplayNames([bcp], { type: 'region' });
+const numero = new Intl.NumberFormat(bcp);
+const pais = (iso: string) => nomePais.of(iso) ?? iso;
+
+const paises = [...paisesJson.paises]
+  .sort((a, b) => b.falantes - a.falantes)
+  .map((p) => ({ ...p, nome: pais(p.iso2) + (p.iso2 === 'IT' ? ' (Tirol do Sul)' : '') }));
+
+const entidades = [...entidadesJson.entidades]
+  .map((e) => ({
+    ...e,
+    nomePais: pais(e.pais),
+    tipoRotulo: tr(e.tipo === 'universidade' ? 'globe.type.universidade' : 'globe.type.associacao'),
+  }))
+  .sort((a, b) => a.nomePais.localeCompare(b.nomePais, bcp) || a.nome.localeCompare(b.nome, bcp));
+
+const pings = pingsJson.pings;
+
+const dados = {
+  locale: bcp,
+  paises,
+  entidades,
+  pings,
+  rotulos: {
+    falantes: tr('globe.speakers'),
+    fonte: tr('globe.source'),
+    aprox: tr('globe.approx'),
+    anonimo: tr('globe.ping.anon'),
+    publico: tr('globe.ping.public'),
+    privado: tr('globe.ping.private'),
+    exemplo: tr('globe.ping.example'),
+  },
+};
+const modos = [
+  { id: 'paises', rotulo: tr('globe.mode.paises'), legenda: tr('globe.legend.paises') },
+  { id: 'entidades', rotulo: tr('globe.mode.entidades'), legenda: tr('globe.legend.entidades') },
+  { id: 'pings', rotulo: tr('globe.mode.pings'), legenda: tr('globe.legend.pings') },
+];
+---
+<section class="globo" aria-labelledby="globo-titulo" data-globo>
+  <h2 id="globo-titulo">{tr('globe.title')}</h2>
+  <p class="lead">{tr('globe.lead')}</p>
+
+  <div class="barra">
+    <div role="tablist" aria-label={tr('globe.modes')} class="modos">
+      {modos.map((m, i) => (
+        <button type="button" role="tab" id={`globo-aba-${m.id}`} aria-selected={i === 0 ? 'true' : 'false'}
+          aria-controls="globo-palco" tabindex={i === 0 ? 0 : -1} data-modo={m.id} data-legenda={m.legenda}>{m.rotulo}</button>
+      ))}
+    </div>
+    <button type="button" class="girar" data-girar aria-pressed="true" data-pause={tr('globe.pause')} data-play={tr('globe.play')}>{tr('globe.pause')}</button>
+  </div>
+
+  <div class="palco" id="globo-palco" role="tabpanel" aria-labelledby="globo-aba-paises">
+    <div class="tela" data-tela aria-hidden="true">
+      <p class="carregando" data-carregando>{tr('globe.loading')}</p>
+    </div>
+    <aside class="lateral">
+      <p class="legenda" data-legenda aria-live="polite">{modos[0].legenda}</p>
+      <div class="detalhe" data-detalhe aria-live="polite"></div>
+      <p class="breve">
+        <button type="button" class="btn-ping" disabled>{tr('globe.ping.add')}</button>
+        <span>{tr('globe.ping.soon')}</span>
+      </p>
+    </aside>
+  </div>
+
+  <p class="aviso" data-nogl hidden>{tr('globe.nogl')}</p>
+
+  <details class="texto" data-texto>
+    <summary>{tr('globe.alt')}</summary>
+
+    <div data-painel="paises">
+      <table>
+        <caption class="sr-only">{tr('globe.mode.paises')}</caption>
+        <thead><tr><th scope="col">{tr('globe.col.country')}</th><th scope="col" class="num">{tr('globe.col.speakers')}</th></tr></thead>
+        <tbody>
+          {paises.map((p) => (<tr><th scope="row">{p.nome}</th><td class="num">{numero.format(p.falantes)}</td></tr>))}
+        </tbody>
+      </table>
+      <p class="nota">{tr('globe.note.countries')} {tr('globe.source')}: <a href={paisesJson.fonteUrl} rel="noopener">{paisesJson.fonte}</a>.</p>
+    </div>
+
+    <div data-painel="entidades" hidden>
+      <table>
+        <caption class="sr-only">{tr('globe.mode.entidades')}</caption>
+        <thead><tr><th scope="col">{tr('globe.col.name')}</th><th scope="col">{tr('globe.col.type')}</th><th scope="col">{tr('globe.col.city')}</th><th scope="col">{tr('globe.col.country')}</th></tr></thead>
+        <tbody>
+          {entidades.map((e) => (
+            <tr>
+              <th scope="row"><a href={e.fonteUrl} rel="noopener">{e.nome}</a></th>
+              <td>{e.tipoRotulo}</td><td>{e.cidade}</td><td>{e.nomePais}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+    <div data-painel="pings" hidden>
+      <table>
+        <caption class="sr-only">{tr('globe.mode.pings')}</caption>
+        <thead><tr><th scope="col">{tr('globe.col.who')}</th><th scope="col">{tr('globe.col.where')}</th></tr></thead>
+        <tbody>
+          {pings.map((p) => (
+            <tr>
+              <th scope="row">{p.publico && p.nome ? `${p.nome}${p.instituicao ? `, ${p.instituicao}` : ''}` : tr('globe.ping.anon')}</th>
+              <td>{p.lat.toFixed(1)}, {p.lng.toFixed(1)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p class="nota">{tr('globe.ping.example')}.</p>
+    </div>
+  </details>
+
+  <script type="application/json" id="globo-dados" set:html={JSON.stringify(dados)} />
+</section>
+
+<script>
+  import type { GlobeInstance } from 'globe.gl';
+
+  type Pais = { iso2: string; iso3166num: string; falantes: number; nome: string; nota: string };
+  type Entidade = { id: string; nome: string; tipo: string; cidade: string; nomePais: string; tipoRotulo: string; lat: number; lng: number; precisao: string; fonte: string; fonteUrl: string };
+  type Ping = { id: string; lat: number; lng: number; publico: boolean; nome: string | null; instituicao: string | null; papel: string | null; mensagem: string | null; exemplo: boolean };
+  type Dados = { locale: string; paises: Pais[]; entidades: Entidade[]; pings: Ping[]; rotulos: Record<string, string> };
+  type Modo = 'paises' | 'entidades' | 'pings';
+
+  const raiz = document.querySelector<HTMLElement>('[data-globo]');
+  const ilha = document.getElementById('globo-dados');
+  if (raiz && ilha) iniciar(raiz, JSON.parse(ilha.textContent ?? '{}') as Dados);
+
+  function esc(s: string): string {
+    return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string);
+  }
+
+  function iniciar(raiz: HTMLElement, dados: Dados) {
+    const tela = raiz.querySelector<HTMLElement>('[data-tela]')!;
+    const carregando = raiz.querySelector<HTMLElement>('[data-carregando]')!;
+    const legenda = raiz.querySelector<HTMLElement>('[data-legenda]:not(button)')!;
+    const detalhe = raiz.querySelector<HTMLElement>('[data-detalhe]')!;
+    const abas = [...raiz.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
+    const botaoGirar = raiz.querySelector<HTMLButtonElement>('[data-girar]')!;
+    const aviso = raiz.querySelector<HTMLElement>('[data-nogl]')!;
+    const texto = raiz.querySelector<HTMLDetailsElement>('[data-texto]')!;
+    const painel = raiz.querySelector<HTMLElement>('[role="tabpanel"]')!;
+    const reduzido = matchMedia('(prefers-reduced-motion: reduce)');
+    const numero = new Intl.NumberFormat(dados.locale);
+    const cor = lerCores();
+
+    let modo: Modo = 'paises';
+    let globo: GlobeInstance | null = null;
+    let pausadoPeloUsuario = reduzido.matches;
+    let sobAPonteiro = false;
+    let features: any[] = [];
+
+    const falantes = new Map(dados.paises.map((p) => [p.iso3166num, p]));
+    const maxF = Math.max(...dados.paises.map((p) => p.falantes));
+    const minF = Math.min(...dados.paises.map((p) => p.falantes));
+    const escala = (v: number) => (Math.log10(v) - Math.log10(minF)) / (Math.log10(maxF) - Math.log10(minF));
+
+    function lerCores() {
+      const s = getComputedStyle(document.documentElement);
+      const v = (n: string) => s.getPropertyValue(n).trim();
+      return { tinta: v('--color-ink'), mudo: v('--color-ink-muted'), linha: v('--color-line'), papel: v('--color-paper'), superficie: v('--color-surface'), acento: v('--color-accent') };
+    }
+    function rgb(hex: string): [number, number, number] {
+      const h = hex.replace('#', '');
+      const n = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
+      return [parseInt(n.slice(0, 2), 16) || 0, parseInt(n.slice(2, 4), 16) || 0, parseInt(n.slice(4, 6), 16) || 0];
+    }
+    const [ar, ag, ab] = rgb(cor.acento);
+
+    // HTML do cartão (dica ao passar o mouse e painel ao clicar).
+    function cartaoPais(p: Pais) {
+      return `<div class="gl-tip"><strong>${esc(p.nome)}</strong><span>${numero.format(p.falantes)} ${esc(dados.rotulos.falantes)}</span></div>`;
+    }
+    function cartaoEntidade(e: Entidade) {
+      const onde = [e.cidade, e.nomePais].filter(Boolean).join(', ');
+      return `<div class="gl-tip"><strong>${esc(e.nome)}</strong><span>${esc(e.tipoRotulo)} · ${esc(onde)}</span>${e.precisao === 'pais' ? `<span>${esc(dados.rotulos.aprox)}</span>` : ''}<span>${esc(dados.rotulos.fonte)}: ${esc(e.fonte)}</span></div>`;
+    }
+    function cartaoPing(p: Ping) {
+      if (!p.publico || !p.nome) {
+        return `<div class="gl-tip"><strong>${esc(dados.rotulos.anonimo)}</strong><span>${esc(dados.rotulos.privado)}</span><span>${esc(dados.rotulos.exemplo)}</span></div>`;
+      }
+      const linhas = [p.papel, p.instituicao].filter(Boolean).map((l) => `<span>${esc(l as string)}</span>`).join('');
+      return `<div class="gl-tip"><strong>${esc(p.nome)}</strong>${linhas}${p.mensagem ? `<span>${esc(p.mensagem)}</span>` : ''}<span>${esc(dados.rotulos.publico)} · ${esc(dados.rotulos.exemplo)}</span></div>`;
+    }
+    function mostrar(html: string) { detalhe.innerHTML = html; }
+
+    function aplicarModo() {
+      if (!globo) return;
+      const g = globo;
+      g.polygonsData(features)
+        .polygonCapColor((f: any) => {
+          const p = modo === 'paises' ? falantes.get(String(f.id).padStart(3, '0')) : undefined;
+          if (!p) return modo === 'paises' ? cor.linha : 'rgba(0,0,0,0)';
+          return `rgba(${ar},${ag},${ab},${(0.3 + 0.7 * escala(p.falantes)).toFixed(2)})`;
+        })
+        .polygonAltitude((f: any) => {
+          const p = modo === 'paises' ? falantes.get(String(f.id).padStart(3, '0')) : undefined;
+          return p ? 0.012 + 0.05 * escala(p.falantes) : 0.004;
+        })
+        .polygonLabel((f: any) => {
+          const p = modo === 'paises' ? falantes.get(String(f.id).padStart(3, '0')) : undefined;
+          return p ? cartaoPais(p) : '';
+        })
+        .onPolygonClick((f: any) => {
+          const p = modo === 'paises' ? falantes.get(String(f.id).padStart(3, '0')) : undefined;
+          if (p) mostrar(cartaoPais(p));
+        });
+
+      if (modo === 'entidades') {
+        g.pointsData(dados.entidades)
+          .pointLat('lat').pointLng('lng')
+          .pointColor((d: any) => (d.tipo === 'universidade' ? cor.acento : cor.tinta))
+          .pointAltitude(0.03).pointRadius(0.32)
+          .pointLabel((d: any) => cartaoEntidade(d))
+          .onPointClick((d: any) => mostrar(cartaoEntidade(d)));
+      } else if (modo === 'pings') {
+        g.pointsData(dados.pings)
+          .pointLat('lat').pointLng('lng')
+          .pointColor((d: any) => (d.publico ? cor.acento : cor.mudo))
+          .pointAltitude(0.03).pointRadius(0.4)
+          .pointLabel((d: any) => cartaoPing(d))
+          .onPointClick((d: any) => mostrar(cartaoPing(d)));
+      } else {
+        g.pointsData([]);
+      }
+
+      if (modo === 'pings' && !reduzido.matches) {
+        g.ringsData(dados.pings.filter((p) => p.publico))
+          .ringLat('lat').ringLng('lng')
+          .ringColor(() => (t: number) => `rgba(${ar},${ag},${ab},${(1 - t).toFixed(2)})`)
+          .ringMaxRadius(3).ringPropagationSpeed(1.2).ringRepeatPeriod(2400);
+      } else {
+        g.ringsData([]);
+      }
+    }
+
+    function girar() {
+      if (!globo) return;
+      const c = globo.controls() as any;
+      c.autoRotate = !pausadoPeloUsuario && !sobAPonteiro && !reduzido.matches;
+    }
+
+    function trocar(novo: Modo, foco = false) {
+      modo = novo;
+      for (const a of abas) {
+        const ativa = a.dataset.modo === novo;
+        a.setAttribute('aria-selected', String(ativa));
+        a.tabIndex = ativa ? 0 : -1;
+        if (ativa) {
+          legenda.textContent = a.dataset.legenda ?? '';
+          painel.setAttribute('aria-labelledby', a.id);
+          if (foco) a.focus();
+        }
+      }
+      for (const p of raiz.querySelectorAll<HTMLElement>('[data-painel]')) p.hidden = p.dataset.painel !== novo;
+      mostrar('');
+      aplicarModo();
+    }
+
+    abas.forEach((a, i) => {
+      a.addEventListener('click', () => trocar(a.dataset.modo as Modo));
+      a.addEventListener('keydown', (e) => {
+        const passo = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+        if (e.key === 'Home' || e.key === 'End') {
+          e.preventDefault();
+          trocar(abas[e.key === 'Home' ? 0 : abas.length - 1].dataset.modo as Modo, true);
+        } else if (passo) {
+          e.preventDefault();
+          trocar(abas[(i + passo + abas.length) % abas.length].dataset.modo as Modo, true);
+        }
+      });
+    });
+
+    function rotuloGirar() {
+      botaoGirar.textContent = pausadoPeloUsuario ? botaoGirar.dataset.play! : botaoGirar.dataset.pause!;
+      botaoGirar.setAttribute('aria-pressed', String(!pausadoPeloUsuario));
+    }
+    botaoGirar.addEventListener('click', () => { pausadoPeloUsuario = !pausadoPeloUsuario; rotuloGirar(); girar(); });
+
+    async function carregar() {
+      try {
+        const [{ default: Globe }, topo, { feature }] = await Promise.all([
+          import('globe.gl'),
+          import('world-atlas/countries-110m.json'),
+          import('topojson-client'),
+        ]);
+        const mundo: any = (topo as any).default ?? topo;
+        features = (feature(mundo, mundo.objects.countries) as any).features;
+
+        const g = new (Globe as any)(tela, { animateIn: !reduzido.matches }) as GlobeInstance;
+        globo = g;
+        g.backgroundColor('rgba(0,0,0,0)')
+          .showAtmosphere(false)
+          .globeImageUrl(null as any)
+          .polygonSideColor(() => 'rgba(0,0,0,0)')
+          .polygonStrokeColor(() => cor.papel)
+          .polygonsTransitionDuration(reduzido.matches ? 0 : 400);
+        (g.globeMaterial() as any).color.set(cor.superficie);
+        const c = g.controls() as any;
+        c.autoRotateSpeed = 0.6;
+        c.enablePan = false;
+        c.minDistance = 180;
+        c.maxDistance = 420;
+        g.pointOfView({ lat: -15, lng: -50, altitude: 2.2 }, 0);
+
+        const medir = () => { const r = tela.getBoundingClientRect(); g.width(r.width).height(r.height); };
+        medir();
+        new ResizeObserver(medir).observe(tela);
+
+        tela.addEventListener('pointerenter', () => { sobAPonteiro = true; girar(); });
+        tela.addEventListener('pointerleave', () => { sobAPonteiro = false; girar(); });
+        reduzido.addEventListener('change', () => { if (reduzido.matches) pausadoPeloUsuario = true; rotuloGirar(); aplicarModo(); girar(); });
+
+        carregando.remove();
+        tela.removeAttribute('aria-hidden');
+        trocar(modo);
+        girar();
+      } catch (erro) {
+        console.warn('Globo indisponível', erro);
+        carregando.remove();
+        aviso.hidden = false;
+        texto.open = true;
+      }
+    }
+
+    // Só baixa o Three.js quando a seção está perto de aparecer.
+    const io = new IntersectionObserver((entradas) => {
+      if (entradas.some((e) => e.isIntersecting)) { io.disconnect(); carregar(); }
+    }, { rootMargin: '300px' });
+    io.observe(raiz);
+    rotuloGirar();
+  }
+</script>
+
+<style>
+  .globo { margin-block: var(--space-12); }
+  .globo h2 { margin: 0 0 var(--space-2); }
+  .lead { margin: 0 0 var(--space-6); color: var(--color-ink-muted); max-width: 40rem; }
+
+  .barra { display: flex; flex-wrap: wrap; gap: var(--space-4); align-items: center; justify-content: space-between; margin-bottom: var(--space-4); }
+  .modos { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+  .modos button, .girar {
+    font: inherit; font-weight: 600; padding: var(--space-2) var(--space-4); min-height: 2.75rem;
+    border: 1px solid var(--color-line); border-radius: var(--radius); background: var(--color-surface); color: var(--color-ink); cursor: pointer;
+  }
+  .modos button:hover, .girar:hover { border-color: var(--color-ink); }
+  .modos button[aria-selected='true'] { background: var(--color-ink); border-color: var(--color-ink); color: var(--color-paper); }
+  .girar { font-weight: 500; color: var(--color-ink-muted); }
+  .modos button:focus-visible, .girar:focus-visible, .texto summary:focus-visible, .btn-ping:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 2px; }
+
+  .palco { display: grid; gap: var(--space-6); grid-template-columns: minmax(0, 1fr); align-items: start; }
+  @media (min-width: 56rem) { .palco { grid-template-columns: minmax(0, 3fr) minmax(16rem, 1fr); } }
+  .tela {
+    position: relative; aspect-ratio: 1; max-height: 40rem; width: 100%;
+    background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius); overflow: hidden;
+    touch-action: pan-y;
+  }
+  .tela :global(canvas) { display: block; }
+  .carregando { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; color: var(--color-ink-muted); }
+  .lateral { display: grid; gap: var(--space-4); }
+  .legenda { margin: 0; color: var(--color-ink-muted); }
+  .detalhe:empty { display: none; }
+  .detalhe { background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius); padding: var(--space-4); }
+  .breve { display: flex; align-items: center; gap: var(--space-3); margin: 0; color: var(--color-ink-muted); font-size: var(--text-sm); }
+  .btn-ping { font: inherit; font-weight: 600; padding: var(--space-2) var(--space-4); border: 1px solid var(--color-line); border-radius: var(--radius); background: var(--color-surface); color: var(--color-ink-muted); }
+  .btn-ping:disabled { cursor: not-allowed; opacity: 0.7; }
+  .aviso { margin-top: var(--space-4); color: var(--color-ink-muted); }
+
+  .texto { margin-top: var(--space-6); }
+  .texto summary { cursor: pointer; font-weight: 600; padding-block: var(--space-2); }
+  table { width: 100%; border-collapse: collapse; margin-top: var(--space-3); font-size: var(--text-sm); }
+  th, td { text-align: left; padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--color-line); vertical-align: top; }
+  thead th { color: var(--color-ink-muted); font-weight: 600; }
+  tbody th { font-weight: 500; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .nota { color: var(--color-ink-muted); font-size: var(--text-sm); }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+  /* Cartões que o Globe.GL injeta dentro de .tela e do painel lateral. */
+  :global(.tela .float-tooltip-kap) { background: var(--color-surface) !important; color: var(--color-ink) !important; border: 1px solid var(--color-line); border-radius: var(--radius); padding: 0 !important; max-width: 18rem; }
+  :global(.gl-tip) { display: grid; gap: var(--space-1); padding: var(--space-3) var(--space-4); font-size: var(--text-sm); line-height: 1.4; text-align: left; }
+  :global(.gl-tip strong) { font-size: var(--text-base); }
+  :global(.gl-tip span) { color: var(--color-ink-muted); }
+  :global(.detalhe .gl-tip) { padding: 0; }
+</style>
