@@ -63,7 +63,7 @@ const modos = [
           aria-controls="globo-palco" tabindex={i === 0 ? 0 : -1} data-modo={m.id} data-legenda={m.legenda}>{m.rotulo}</button>
       ))}
     </div>
-    <button type="button" class="girar" data-girar aria-pressed="true" data-pause={tr('globe.pause')} data-play={tr('globe.play')}>{tr('globe.pause')}</button>
+    <button type="button" class="girar" data-girar data-pause={tr('globe.pause')} data-play={tr('globe.play')}>{tr('globe.pause')}</button>
   </div>
 
   <div class="palco" id="globo-palco" role="tabpanel" aria-labelledby="globo-aba-paises">
@@ -159,6 +159,8 @@ const modos = [
     const texto = raiz.querySelector<HTMLDetailsElement>('[data-texto]')!;
     const painel = raiz.querySelector<HTMLElement>('[role="tabpanel"]')!;
     const reduzido = matchMedia('(prefers-reduced-motion: reduce)');
+    const toque = matchMedia('(pointer: coarse)').matches;
+    const estreito = matchMedia('(max-width: 40rem)').matches;
     const numero = new Intl.NumberFormat(dados.locale);
     const cor = lerCores();
 
@@ -228,14 +230,14 @@ const modos = [
         g.pointsData(dados.entidades)
           .pointLat('lat').pointLng('lng')
           .pointColor((d: any) => (d.tipo === 'universidade' ? cor.acento : cor.tinta))
-          .pointAltitude(0.03).pointRadius(0.32)
+          .pointAltitude(0.03).pointRadius(toque ? 0.7 : 0.32)
           .pointLabel((d: any) => cartaoEntidade(d))
           .onPointClick((d: any) => mostrar(cartaoEntidade(d)));
       } else if (modo === 'pings') {
         g.pointsData(dados.pings)
           .pointLat('lat').pointLng('lng')
           .pointColor((d: any) => (d.publico ? cor.acento : cor.mudo))
-          .pointAltitude(0.03).pointRadius(0.4)
+          .pointAltitude(0.03).pointRadius(toque ? 0.8 : 0.4)
           .pointLabel((d: any) => cartaoPing(d))
           .onPointClick((d: any) => mostrar(cartaoPing(d)));
       } else {
@@ -255,7 +257,20 @@ const modos = [
     function girar() {
       if (!globo) return;
       const c = globo.controls() as any;
-      c.autoRotate = !pausadoPeloUsuario && !sobAPonteiro && !reduzido.matches;
+      // Com prefers-reduced-motion o globo começa parado (pausadoPeloUsuario = true),
+      // mas se a pessoa apertar "Girar o globo" a escolha dela vale.
+      c.autoRotate = !pausadoPeloUsuario && !sobAPonteiro;
+    }
+
+    // No celular as abas ficam numa linha com rolagem horizontal: traz a ativa para a vista
+    // sem mexer na rolagem vertical da página.
+    function mostrarAba(a: HTMLElement) {
+      const lista = a.parentElement!;
+      if (lista.scrollWidth <= lista.clientWidth) return;
+      const ra = a.getBoundingClientRect();
+      const rl = lista.getBoundingClientRect();
+      const delta = ra.left < rl.left ? ra.left - rl.left - 8 : ra.right > rl.right ? ra.right - rl.right + 8 : 0;
+      if (delta) lista.scrollBy({ left: delta, behavior: reduzido.matches ? 'auto' : 'smooth' });
     }
 
     function trocar(novo: Modo, foco = false) {
@@ -267,7 +282,8 @@ const modos = [
         if (ativa) {
           legenda.textContent = a.dataset.legenda ?? '';
           painel.setAttribute('aria-labelledby', a.id);
-          if (foco) a.focus();
+          if (foco) a.focus({ preventScroll: true });
+          mostrarAba(a);
         }
       }
       for (const p of raiz.querySelectorAll<HTMLElement>('[data-painel]')) p.hidden = p.dataset.painel !== novo;
@@ -291,7 +307,6 @@ const modos = [
 
     function rotuloGirar() {
       botaoGirar.textContent = pausadoPeloUsuario ? botaoGirar.dataset.play! : botaoGirar.dataset.pause!;
-      botaoGirar.setAttribute('aria-pressed', String(!pausadoPeloUsuario));
     }
     botaoGirar.addEventListener('click', () => { pausadoPeloUsuario = !pausadoPeloUsuario; rotuloGirar(); girar(); });
 
@@ -324,12 +339,15 @@ const modos = [
         c.enablePan = false;
         c.minDistance = 180;
         c.maxDistance = 420;
-        g.pointOfView({ lat: -15, lng: -50, altitude: 2.2 }, 0);
+        g.pointOfView({ lat: -15, lng: -50, altitude: estreito ? 1.7 : 2.2 }, 0);
 
-        const medir = () => { const r = tela.getBoundingClientRect(); g.width(r.width).height(r.height); };
+        const medir = () => { g.width(tela.clientWidth).height(tela.clientHeight); };
         medir();
         new ResizeObserver(medir).observe(tela);
 
+        // A roda do mouse sobre o globo rola a página. Com Ctrl ou Cmd (e na pinça do trackpad,
+        // que chega como wheel com ctrlKey) o evento segue para os controles e aproxima o globo.
+        tela.addEventListener('wheel', (e) => { if (!e.ctrlKey && !e.metaKey) e.stopPropagation(); }, { capture: true });
         tela.addEventListener('pointerenter', () => { sobAPonteiro = true; girar(); });
         tela.addEventListener('pointerleave', () => { sobAPonteiro = false; girar(); });
         reduzido.addEventListener('change', () => { if (reduzido.matches) pausadoPeloUsuario = true; rotuloGirar(); aplicarModo(); girar(); });
@@ -362,6 +380,15 @@ const modos = [
 
   .barra { display: flex; flex-wrap: wrap; gap: var(--space-4); align-items: center; justify-content: space-between; margin-bottom: var(--space-4); }
   .modos { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+  @media (max-width: 40rem) {
+    .barra { gap: var(--space-3); }
+    .modos {
+      flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none;
+      width: 100%; padding: 4px; margin: -4px;
+    }
+    .modos::-webkit-scrollbar { display: none; }
+    .modos button { flex: none; white-space: nowrap; }
+  }
   .modos button, .girar {
     font: inherit; font-weight: 600; padding: var(--space-2) var(--space-4); min-height: 2.75rem;
     border: 1px solid var(--color-line); border-radius: var(--radius); background: var(--color-surface); color: var(--color-ink); cursor: pointer;
@@ -375,10 +402,15 @@ const modos = [
   @media (min-width: 56rem) { .palco { grid-template-columns: minmax(0, 3fr) minmax(16rem, 1fr); } }
   .tela {
     position: relative; aspect-ratio: 1; max-height: 40rem; width: 100%;
-    background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius); overflow: hidden;
+    /* Sem overflow: hidden (para a dica poder sair do quadro), o aspect-ratio deixaria o
+       conteúdo esticar a caixa e o ResizeObserver entraria em ciclo. min-height: 0 impede. */
+    min-height: 0;
+    background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius);
     touch-action: pan-y;
   }
-  .tela :global(canvas) { display: block; }
+  /* O OrbitControls põe touch-action: none no canvas, o que impede rolar a página com o dedo
+     sobre o globo. pan-y devolve a rolagem vertical; o arrasto horizontal continua girando. */
+  .tela :global(canvas) { display: block; touch-action: pan-y !important; }
   .carregando { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; color: var(--color-ink-muted); }
   .lateral { display: grid; gap: var(--space-4); }
   .legenda { margin: 0; color: var(--color-ink-muted); }
@@ -400,7 +432,7 @@ const modos = [
   .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 
   /* Cartões que o Globe.GL injeta dentro de .tela e do painel lateral. */
-  :global(.tela .float-tooltip-kap) { background: var(--color-surface) !important; color: var(--color-ink) !important; border: 1px solid var(--color-line); border-radius: var(--radius); padding: 0 !important; max-width: 18rem; }
+  :global(.tela .float-tooltip-kap) { z-index: 2; background: var(--color-surface) !important; color: var(--color-ink) !important; border: 1px solid var(--color-line); border-radius: var(--radius); padding: 0 !important; max-width: 18rem; }
   :global(.gl-tip) { display: grid; gap: var(--space-1); padding: var(--space-3) var(--space-4); font-size: var(--text-sm); line-height: 1.4; text-align: left; }
   :global(.gl-tip strong) { font-size: var(--text-base); }
   :global(.gl-tip span) { color: var(--color-ink-muted); }
