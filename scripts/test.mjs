@@ -78,8 +78,9 @@ const paginas = [];
 for (const modelo of modelos) {
   for (const loc of LOCALES) {
     const rota = `${loc}${modelo}`;
+    // Todas as páginas da lista existem desde a tarefa 08 (agenda); faltar uma agora é erro.
     if (existsSync(join(OUT, rota, 'index.html'))) paginas.push(`/${rota}`);
-    else console.log(`  (sem ${'/' + rota}, ignorada)`);
+    else { console.log(`FALHOU /${rota}  (página não gerada)`); falhas++; }
   }
 }
 const navegador = await chromium.launch();
