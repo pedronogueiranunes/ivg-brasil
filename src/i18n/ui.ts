@@ -70,6 +70,15 @@ export const ui = {
     'search.lead': 'Procure em todas as páginas e notícias do site.',
     'search.noscript': 'A busca precisa de JavaScript. Use o menu para navegar pelas seções.',
     'search.unavailable': 'A busca não carregou. Tente de novo em instantes ou use o menu para navegar pelas seções.',
+    // tarefa 07
+    'editoria.carreira': 'Carreira', 'editoria.rio2030': 'Rio 2030', 'editoria.escolas': 'Escolas', 'editoria.historia': 'História',
+    'share.title': 'Compartilhar',
+    'share.whatsapp': 'WhatsApp',
+    'share.linkedin': 'LinkedIn',
+    'share.copy': 'Copiar link',
+    'share.copied': 'Link copiado.',
+    'share.copyError': 'Não foi possível copiar. Copie o endereço na barra do navegador.',
+    'share.newWindow': '(abre em nova janela)',
   },
   en: {
     'site.name': 'IVG Brasil',
@@ -135,6 +144,15 @@ export const ui = {
     'search.lead': 'Search every page and news item on the site.',
     'search.noscript': 'Search needs JavaScript. Use the menu to browse the sections.',
     'search.unavailable': 'Search did not load. Try again in a moment or use the menu to browse the sections.',
+    // tarefa 07
+    'editoria.carreira': 'Careers', 'editoria.rio2030': 'Rio 2030', 'editoria.escolas': 'Schools', 'editoria.historia': 'History',
+    'share.title': 'Share',
+    'share.whatsapp': 'WhatsApp',
+    'share.linkedin': 'LinkedIn',
+    'share.copy': 'Copy link',
+    'share.copied': 'Link copied.',
+    'share.copyError': 'Could not copy. Copy the address from the browser bar.',
+    'share.newWindow': '(opens in a new window)',
   },
   de: {
     'site.name': 'IVG Brasil',
@@ -200,6 +218,15 @@ export const ui = {
     'search.lead': 'Durchsuchen Sie alle Seiten und Meldungen der Website.',
     'search.noscript': 'Die Suche braucht JavaScript. Nutzen Sie das Menü, um die Bereiche aufzurufen.',
     'search.unavailable': 'Die Suche wurde nicht geladen. Versuchen Sie es gleich noch einmal oder nutzen Sie das Menü.',
+    // tarefa 07
+    'editoria.carreira': 'Karriere', 'editoria.rio2030': 'Rio 2030', 'editoria.escolas': 'Schulen', 'editoria.historia': 'Geschichte',
+    'share.title': 'Teilen',
+    'share.whatsapp': 'WhatsApp',
+    'share.linkedin': 'LinkedIn',
+    'share.copy': 'Link kopieren',
+    'share.copied': 'Link kopiert.',
+    'share.copyError': 'Kopieren nicht möglich. Bitte die Adresse aus der Adresszeile kopieren.',
+    'share.newWindow': '(öffnet in neuem Fenster)',
   },
 } as const;
 

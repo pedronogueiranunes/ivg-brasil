@@ -4,6 +4,7 @@ import Header from '@/components/Header.astro';
 import Footer from '@/components/Footer.astro';
 import { getLocale, switchLocale, t } from '@/i18n/utils';
 import { locales } from '@/i18n/ui';
+import { ogImage as ogPadrao, OG_WIDTH, OG_HEIGHT } from '@/lib/og';
 interface Props {
   /** Título curto; vira "Título · IVG Brasil". */
   title?: string;
@@ -16,14 +17,20 @@ interface Props {
   bare?: boolean;
   /** Entra no índice da busca (Pagefind). Desligado na 404 e na própria página de busca. */
   indexar?: boolean;
+  /** Imagem de compartilhamento, caminho vindo de ogImage() em src/lib/og.ts. Sem ela, usa a padrão do idioma. */
+  ogImage?: string;
+  /** 'article' nas notícias. */
+  ogType?: 'website' | 'article';
 }
 const locale = getLocale(Astro.url);
 const tr = t(locale);
-const { title, seoTitle, description = tr('home.lead'), jsonLd, bare = false, indexar = !bare } = Astro.props;
+const { title, seoTitle, description = tr('home.lead'), jsonLd, bare = false, indexar = !bare, ogImage, ogType = 'website' } = Astro.props;
 const fullTitle = seoTitle ?? (title ? `${title} · ${tr('site.name')}` : `${tr('site.name')} · ${tr('site.tagline')}`);
 const canonical = new URL(Astro.url.pathname, Astro.site);
 // Staging (com subpasta) e qualquer build com PUBLIC_NOINDEX=1 ficam fora do Google.
 const noindex = import.meta.env.BASE_URL !== '/' || import.meta.env.PUBLIC_NOINDEX === '1';
+const ogImageUrl = new URL(ogImage ?? ogPadrao(locale, 'padrao'), Astro.site);
+const ogLocale = { pt: 'pt_BR', en: 'en_US', de: 'de_DE' }[locale];
 const ld = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
 ---
 <!doctype html>
@@ -38,8 +45,19 @@ const ld = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
     <link rel="alternate" hreflang="x-default" href={new URL(switchLocale(Astro.url, 'pt'), Astro.site)} />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content={ogType} />
     <meta property="og:url" content={canonical} />
+    <meta property="og:site_name" content={tr('site.name')} />
+    <meta property="og:locale" content={ogLocale} />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content={String(OG_WIDTH)} />
+    <meta property="og:image:height" content={String(OG_HEIGHT)} />
+    <meta property="og:image:alt" content={fullTitle} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageUrl} />
     {noindex && <meta name="robots" content="noindex" />}
     {ld.map((d) => <script type="application/ld+json" set:html={JSON.stringify(d)} />)}
   </head>

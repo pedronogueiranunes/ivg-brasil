@@ -4,13 +4,14 @@ import NewsCard from '@/components/NewsCard.astro';
 import { getLocale, t } from '@/i18n/utils';
 import { localeParams } from '@/i18n/paths';
 import { getLocalizedList } from '@/lib/content';
+import { ogImage } from '@/lib/og';
 export function getStaticPaths() { return localeParams; }
 const locale = getLocale(Astro.url);
 const tr = t(locale);
 const news = (await getLocalizedList('noticias', locale, ({ data }) => !data.rascunho))
   .sort((a, b) => b.entry.data.data.valueOf() - a.entry.data.data.valueOf());
 ---
-<Base title={tr('nav.noticias')}>
+<Base title={tr('nav.noticias')} ogImage={ogImage(locale, 'noticias')}>
   <h1>{tr('nav.noticias')}</h1>
   <div class="list">{news.map((n) => <NewsCard entry={n.entry} slug={n.slug} fallback={n.fallback} locale={locale} />)}</div>
 </Base>

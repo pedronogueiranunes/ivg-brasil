@@ -1,0 +1,49 @@
+---
+// Botões de compartilhar (tarefa 07). Links diretos, sem scripts de terceiros.
+// "Copiar link" só aparece com JavaScript e Clipboard API; sem eles, os outros dois funcionam.
+import { t } from '@/i18n/utils';
+import type { Locale } from '@/i18n/ui';
+interface Props { locale: Locale; title: string; url: string }
+const { locale, title, url } = Astro.props;
+const tr = t(locale);
+const whatsapp = `https://wa.me/?text=${encodeURIComponent(`${title} ${url}`)}`;
+const linkedin = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
+---
+<section class="share" aria-labelledby="share-title">
+  <h2 id="share-title">{tr('share.title')}</h2>
+  <ul>
+    <li><a href={whatsapp} target="_blank" rel="noopener noreferrer">{tr('share.whatsapp')}<span class="sr-only"> {tr('share.newWindow')}</span></a></li>
+    <li><a href={linkedin} target="_blank" rel="noopener noreferrer">{tr('share.linkedin')}<span class="sr-only"> {tr('share.newWindow')}</span></a></li>
+    <li><button type="button" data-share-copy={url} data-ok={tr('share.copied')} data-erro={tr('share.copyError')} hidden>{tr('share.copy')}</button></li>
+  </ul>
+  <p class="status" role="status" data-share-status></p>
+</section>
+<script>
+  for (const botao of document.querySelectorAll<HTMLButtonElement>('[data-share-copy]')) {
+    if (!navigator.clipboard) continue;
+    botao.hidden = false;
+    const status = botao.closest('.share')?.querySelector<HTMLElement>('[data-share-status]');
+    botao.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(botao.dataset.shareCopy ?? location.href);
+        if (status) status.textContent = botao.dataset.ok ?? '';
+      } catch {
+        if (status) status.textContent = botao.dataset.erro ?? '';
+      }
+    });
+  }
+</script>
+<style>
+  .share { margin-top: var(--space-12); padding-top: var(--space-6); border-top: 1px solid var(--color-line); }
+  h2 { font-size: var(--text-base); margin: 0 0 var(--space-3); }
+  ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-2); }
+  a, button {
+    display: inline-flex; align-items: center; min-height: 44px; padding: var(--space-2) var(--space-4);
+    font: inherit; font-size: var(--text-sm); font-weight: 600; color: var(--color-ink); text-decoration: none;
+    background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius); cursor: pointer;
+  }
+  a:hover, button:hover { border-color: var(--color-ink); }
+  button[hidden] { display: none; }
+  .status { min-height: 1.6em; margin: var(--space-2) 0 0; font-size: var(--text-sm); color: var(--color-ink-muted); }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+</style>

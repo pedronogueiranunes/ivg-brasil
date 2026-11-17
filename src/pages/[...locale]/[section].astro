@@ -12,6 +12,7 @@ import { locales, defaultLocale } from '@/i18n/ui';
 import { getLocale, t } from '@/i18n/utils';
 import { getLocalized } from '@/lib/content';
 import { faqPage } from '@/lib/schema';
+import { ogImage } from '@/lib/og';
 export function getStaticPaths() {
   // Páginas fora do menu (privacidade) entram aqui para usar o mesmo layout.
   const pending = [...sections.filter((s) => s.slug !== 'noticias'), { slug: 'privacidade', label: 'footer.privacy' as const }];
@@ -34,6 +35,7 @@ const faq = page?.data.faq ?? [];
     seoTitle={page.data.seoTitulo}
     description={page.data.seoDescricao ?? page.data.intro}
     jsonLd={faq.length ? faqPage(faq) : undefined}
+    ogImage={ogImage(locale, slug)}
   >
     <article class="page">
       <LangNotice locale={locale} show={!!found?.fallback} />
@@ -48,7 +50,7 @@ const faq = page?.data.faq ?? [];
     </article>
   </Base>
 ) : (
-  <Base title={tr(label)}>
+  <Base title={tr(label)} ogImage={ogImage(locale, slug)}>
     <h1>{tr(label)}</h1>
     <p>{tr('placeholder.wip')}</p>
   </Base>
