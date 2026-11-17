@@ -16,7 +16,7 @@ const { entry, fallback } = Astro.props;
 const locale = getLocale(Astro.url);
 const { Content } = await render(entry);
 // Em fallback o bloco todo é PT, então a data também.
-const date = entry.data.data.toLocaleDateString(fallback ? defaultLocale : locale, { day: 'numeric', month: 'long', year: 'numeric' });
+const date = entry.data.data.toLocaleDateString(fallback ? defaultLocale : locale, { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 ---
 <Base title={entry.data.titulo} description={entry.data.resumo}>
   <article class="post">

@@ -6,7 +6,7 @@ import type { Locale } from '@/i18n/ui';
 interface Props { entry: CollectionEntry<'noticias'>; slug: string; locale: Locale; fallback?: boolean }
 const { entry, slug, locale, fallback = false } = Astro.props;
 const textLang = fallback ? 'pt-BR' : undefined;
-const date = entry.data.data.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' });
+const date = entry.data.data.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 ---
 <article class="card">
   <p class="meta"><time datetime={entry.data.data.toISOString()}>{date}</time></p>
