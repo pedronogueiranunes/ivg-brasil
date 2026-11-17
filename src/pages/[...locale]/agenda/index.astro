@@ -1,0 +1,104 @@
+---
+// Agenda (tarefa 08): próximos eventos e, recolhidos, os passados. O corte é feito no build (regra F48),
+// então um evento sai de "próximos" no primeiro deploy depois do último dia.
+import Base from '@/layouts/Base.astro';
+import { getLocale, t, href } from '@/i18n/utils';
+import { localeParams } from '@/i18n/paths';
+import type { UIKey } from '@/i18n/ui';
+import { agenda, periodo, horario, googleAgenda } from '@/lib/eventos';
+export function getStaticPaths() { return localeParams; }
+const locale = getLocale(Astro.url);
+const tr = t(locale);
+const { proximos, passados } = await agenda(locale);
+const textoHorario = (h: ReturnType<typeof horario>) => !h ? '' : `${(h.fim ? tr('agenda.timeRange') : tr('agenda.timeSingle')).replace('{inicio}', h.inicio).replace('{fim}', h.fim ?? '')} (${tr('agenda.timezone')})`;
+type Item = (typeof proximos)[number];
+const id = (item: Item) => `evento-${item.slug}`;
+---
+<Base title={tr('agenda.title')} description={tr('agenda.lead')}>
+  <div class="agenda">
+    <h1>{tr('agenda.title')}</h1>
+    <p class="lead">{tr('agenda.lead')}</p>
+
+    <section aria-labelledby="proximos">
+      <h2 id="proximos">{tr('agenda.upcoming')}</h2>
+      {proximos.length === 0 ? <p>{tr('agenda.empty')}</p> : (
+        <ul class="lista">
+          {proximos.map((item) => {
+            const e = item.entry.data;
+            const textLang = item.fallback ? 'pt-BR' : undefined;
+            return (
+              <li class="evento">
+                <p class="quando">
+                  <time datetime={e.dataInicio.toISOString().slice(0, 10)}>{periodo(item.entry, locale)}</time>{horario(item.entry) && <span>, {textoHorario(horario(item.entry))}</span>}
+                </p>
+                <h3 id={id(item)} lang={textLang}>{e.titulo}</h3>
+                <p class="onde">
+                  <span>{tr(`evento.tipo.${e.editoria}` as UIKey)}</span>
+                  {' · '}
+                  {e.online ? <span>{tr('agenda.online')}</span> : e.local && <span lang={textLang}>{e.local}</span>}
+                </p>
+                {e.resumo && <p lang={textLang}>{e.resumo}</p>}
+                {e.link && <p><a href={e.link} aria-describedby={id(item)}>{e.online ? tr('agenda.join') : tr('agenda.link')}</a></p>}
+                <p class="acoes">
+                  <a class="botao" href={href(locale, 'agenda').replace(/\/$/, `/${item.slug}.ics`)} aria-describedby={id(item)}>{tr('agenda.ics')}</a>
+                  <a class="botao" href={googleAgenda(item.entry)} target="_blank" rel="noopener noreferrer" aria-describedby={id(item)}>{tr('agenda.google')}<span class="sr-only"> {tr('agenda.newWindow')}</span></a>
+                </p>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
+
+    {passados.length > 0 && (
+      <section aria-labelledby="passados" class="passados">
+        <h2 id="passados">{tr('agenda.past')}</h2>
+        <details>
+          <summary>{tr('agenda.pastShow')} ({passados.length})</summary>
+          <ul class="lista">
+            {passados.map((item) => {
+              const e = item.entry.data;
+              const textLang = item.fallback ? 'pt-BR' : undefined;
+              return (
+                <li class="evento">
+                  <p class="quando"><time datetime={e.dataInicio.toISOString().slice(0, 10)}>{periodo(item.entry, locale)}</time></p>
+                  <h3 lang={textLang}>{e.titulo}</h3>
+                  <p class="onde">
+                    <span>{tr(`evento.tipo.${e.editoria}` as UIKey)}</span>
+                    {' · '}
+                    {e.online ? <span>{tr('agenda.online')}</span> : e.local && <span lang={textLang}>{e.local}</span>}
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
+        </details>
+      </section>
+    )}
+  </div>
+</Base>
+<style>
+  .agenda { padding-block: var(--space-8) var(--space-12); max-width: 48rem; }
+  h1 { font-size: var(--text-2xl); margin: 0 0 var(--space-4); }
+  .lead { font-size: var(--text-lg); color: var(--color-ink-muted); margin: 0 0 var(--space-12); }
+  h2 { font-size: var(--text-xl); margin: 0 0 var(--space-6); }
+  .lista { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-4); }
+  .evento { background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius); padding: var(--space-6); }
+  .evento > * { margin: 0; }
+  .evento > * + * { margin-top: var(--space-3); }
+  .quando { font-weight: 600; font-variant-numeric: tabular-nums; }
+  h3 { font-size: var(--text-lg); margin-top: var(--space-2) !important; }
+  .onde { font-size: var(--text-sm); color: var(--color-ink-muted); }
+  .acoes { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4) !important; }
+  .botao {
+    display: inline-flex; align-items: center; min-height: 44px; padding: var(--space-2) var(--space-4);
+    font-size: var(--text-sm); font-weight: 600; text-decoration: none;
+    border: 1px solid var(--color-line); border-radius: var(--radius); background: var(--color-paper);
+  }
+  .botao:first-child { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+  .botao:hover { border-color: var(--color-ink); }
+  .passados { margin-top: var(--space-12); }
+  summary { cursor: pointer; font-weight: 600; padding-block: var(--space-2); margin-bottom: var(--space-4); }
+  .passados .evento { background: transparent; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+</style>

@@ -87,6 +87,17 @@ const eventosSchema = (traduzido: boolean) => ({
     titulo: fields.slug({ name: { label: 'Nome do evento' }, ...(traduzido ? { slug: enderecoTraduzido } : {}) }),
     dataInicio: fields.date({ label: 'Data de início', validation: { isRequired: true } }),
     dataFim: fields.date({ label: 'Data de término', description: 'Deixe vazio se o evento durar um dia.' }),
+    // tarefa 08: horários no fuso de Brasília (America/Sao_Paulo). Vazio = evento de dia inteiro.
+    horaInicio: fields.text({
+      label: 'Hora de início',
+      description: 'Formato 09:00, horário de Brasília. Deixe vazio para evento de dia inteiro.',
+      validation: { pattern: { regex: /^(([01]\d|2[0-3]):[0-5]\d)?$/, message: 'Use o formato 09:00.' } },
+    }),
+    horaFim: fields.text({
+      label: 'Hora de término',
+      description: 'Formato 18:00, no último dia do evento. Sem ela, o calendário marca uma hora de duração.',
+      validation: { pattern: { regex: /^(([01]\d|2[0-3]):[0-5]\d)?$/, message: 'Use o formato 18:00.' } },
+    }),
     local: fields.text({ label: 'Local', description: 'Cidade e instituição. Para evento online, escreva Online.' }),
     online: fields.checkbox({ label: 'Evento online', defaultValue: false }),
     link: fields.url({ label: 'Link do evento ou da inscrição' }),

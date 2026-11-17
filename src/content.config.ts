@@ -53,6 +53,9 @@ const eventos = defineCollection({
     titulo: z.string(),
     dataInicio: z.coerce.date(),
     dataFim: z.coerce.date().nullish(),
+    // tarefa 08: HH:MM no fuso America/Sao_Paulo; vazio = dia inteiro.
+    horaInicio: z.string().regex(/^(([01]\d|2[0-3]):[0-5]\d)?$/).optional(),
+    horaFim: z.string().regex(/^(([01]\d|2[0-3]):[0-5]\d)?$/).optional(),
     local: opt,
     online: z.boolean().default(false),
     link: opt,
