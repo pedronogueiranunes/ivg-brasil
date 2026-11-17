@@ -10,14 +10,14 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 <Base title={t('pt')('e404.title')} description={t('pt')('e404.text')} bare>
   <header class="top">
     <a class="brand" href={href('pt')}>{t('pt')('site.name')}</a>
-    <nav class="langs" aria-label={t('pt')('lang.label')}>
+    <nav class="langs" aria-label={t('pt')('lang.label')} {...Object.fromEntries(locales.map((l) => [`data-rotulo-${l}`, t(l)('lang.label')]))}>
       {locales.map((l) => <a href={href(l)} hreflang={l} lang={l}>{localeNames[l]}</a>)}
     </nav>
   </header>
   {locales.map((l: Locale) => {
     const tr = t(l);
     return (
-      <section data-lang={l} lang={l === 'pt' ? 'pt-BR' : l} hidden={l !== 'pt'} class="erro">
+      <section data-lang={l} data-titulo={`${tr('e404.title')} · ${tr('site.name')}`} lang={l === 'pt' ? 'pt-BR' : l} hidden={l !== 'pt'} class="erro">
         <p class="codigo">404</p>
         <h1>{tr('e404.title')}</h1>
         <p class="lead">{tr('e404.text')}</p>
@@ -42,8 +42,14 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
     if (p.indexOf(base) === 0) p = p.slice(base.length);
     var m = p.match(/^\/(en|de)(\/|$)/);
     var l = m ? m[1] : 'pt';
-    document.querySelectorAll('[data-lang]').forEach(function (el) { el.hidden = el.getAttribute('data-lang') !== l; });
+    document.querySelectorAll('[data-lang]').forEach(function (el) {
+      el.hidden = el.getAttribute('data-lang') !== l;
+      if (!el.hidden) document.title = el.getAttribute('data-titulo');
+    });
     document.documentElement.lang = l === 'pt' ? 'pt-BR' : l;
+    // Título da aba e rótulo do menu de idiomas também no idioma da página.
+    var nav = document.querySelector('.langs');
+    if (nav) nav.setAttribute('aria-label', nav.getAttribute('data-rotulo-' + l));
   </script>
 </Base>
 <style>
