@@ -1,24 +1,26 @@
 ---
 import Base from '@/layouts/Base.astro';
 import LangNotice from '@/components/LangNotice.astro';
+import ShareLinks from '@/components/ShareLinks.astro';
 import { render } from 'astro:content';
 import { locales, defaultLocale } from '@/i18n/ui';
 import { getLocale } from '@/i18n/utils';
 import { getLocalizedList } from '@/lib/content';
+import { ogImage } from '@/lib/og';
 export async function getStaticPaths() {
   const porIdioma = await Promise.all(locales.map(async (l) => [l, await getLocalizedList('noticias', l, ({ data }) => !data.rascunho)] as const));
   return porIdioma.flatMap(([l, itens]) => itens.map(({ slug, entry, fallback }) => ({
     params: { locale: l === defaultLocale ? undefined : l, slug },
-    props: { entry, fallback },
+    props: { entry, fallback, slug },
   })));
 }
-const { entry, fallback } = Astro.props;
+const { entry, fallback, slug } = Astro.props;
 const locale = getLocale(Astro.url);
 const { Content } = await render(entry);
 // Em fallback o bloco todo é PT, então a data também.
 const date = entry.data.data.toLocaleDateString(fallback ? defaultLocale : locale, { day: 'numeric', month: 'long', year: 'numeric' });
 ---
-<Base title={entry.data.titulo} description={entry.data.resumo}>
+<Base title={entry.data.titulo} description={entry.data.resumo} ogImage={ogImage(locale, `noticias/${slug}`)} ogType="article">
   <article class="post">
     <LangNotice locale={locale} show={fallback} />
     <div lang={fallback ? 'pt-BR' : undefined}>
@@ -26,6 +28,7 @@ const date = entry.data.data.toLocaleDateString(fallback ? defaultLocale : local
       <h1>{entry.data.titulo}</h1>
       <Content />
     </div>
+    <ShareLinks locale={locale} title={entry.data.titulo} url={new URL(Astro.url.pathname, Astro.site).href} />
   </article>
 </Base>
 <style>
