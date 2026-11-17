@@ -73,7 +73,7 @@ const primeiraNoticia = () => {
   const pasta = readdirSync(dir).find((n) => statSync(join(dir, n)).isDirectory());
   return pasta ? `noticias/${pasta}/` : null;
 };
-const modelos = ['', 'noticias/', primeiraNoticia(), 'agenda/', 'busca/'].filter((m) => m !== null);
+const modelos = ['', 'noticias/', primeiraNoticia(), 'agenda/', 'busca/', 'pesquisa/cursos/'].filter((m) => m !== null);
 const paginas = [];
 for (const modelo of modelos) {
   for (const loc of LOCALES) {

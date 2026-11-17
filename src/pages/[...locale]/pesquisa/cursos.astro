@@ -1,0 +1,172 @@
+---
+// Cursos de alemão no Brasil (tarefa 09). A lista por estado é o conteúdo principal e funciona sem JavaScript.
+// Filtros e mapa só aparecem com JavaScript; o mapa (Leaflet) carrega quando entra na tela.
+import Base from '@/layouts/Base.astro';
+import MapaCursos from '@/components/MapaCursos';
+import 'leaflet/dist/leaflet.css';
+import { getCollection } from 'astro:content';
+import { getLocale, t } from '@/i18n/utils';
+import { localeParams } from '@/i18n/paths';
+import type { UIKey } from '@/i18n/ui';
+import { UF_NOMES, type CursoNoMapa, type UF } from '@/lib/cursos';
+export function getStaticPaths() { return localeParams; }
+const locale = getLocale(Astro.url);
+const tr = t(locale);
+
+const cursos = (await getCollection('cursos'))
+  .map((c) => ({ id: c.id.replace(/^pt\//, ''), ...c.data }))
+  .sort((a, b) => a.instituicao.localeCompare(b.instituicao, 'pt-BR'));
+const porUf = (Object.keys(UF_NOMES) as UF[])
+  .map((uf) => ({ uf, nome: UF_NOMES[uf], itens: cursos.filter((c) => c.uf === uf) }))
+  .filter((g) => g.itens.length)
+  .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+const noMapa: CursoNoMapa[] = cursos
+  .filter((c) => typeof c.lat === 'number' && typeof c.lng === 'number')
+  .map((c) => ({ id: c.id, instituicao: c.instituicao, cidade: c.cidade ?? '', uf: c.uf, nivel: c.nivel, modalidade: c.modalidade, link: c.link ?? '', lat: c.lat as number, lng: c.lng as number }));
+
+const niveis = ['graduacao', 'pos'] as const;
+const modalidades = ['presencial', 'ead', 'hibrido'] as const;
+const rotuloNivel = Object.fromEntries(niveis.map((n) => [n, tr(`cursos.nivel.${n}` as UIKey)]));
+const rotuloModalidade = Object.fromEntries(modalidades.map((m) => [m, tr(`cursos.modalidade.${m}` as UIKey)]));
+const rotulos = { mapa: tr('cursos.map'), carregando: tr('cursos.mapLoading'), osm: tr('cursos.osm'), niveis: rotuloNivel, modalidades: rotuloModalidade };
+const contagem = (n: number) => tr(new Intl.PluralRules(locale).select(n) === 'one' ? 'cursos.count.one' : 'cursos.count.other').replace('{n}', String(n));
+---
+<Base title={tr('cursos.title')} description={tr('cursos.lead')}>
+  <div class="cursos">
+    <h1>{tr('cursos.title')}</h1>
+    <p class="lead">{tr('cursos.lead')}</p>
+
+    {cursos.length === 0 ? <p>{tr('cursos.none')}</p> : (
+      <>
+        <form class="filtros" data-cursos-filtros data-com-js hidden
+          data-um={tr('cursos.count.one')} data-varios={tr('cursos.count.other')} data-vazio={tr('cursos.empty')}>
+          <fieldset>
+            <legend>{tr('cursos.filters')}</legend>
+            <div class="campos">
+              <label>
+                <span>{tr('cursos.uf')}</span>
+                <select name="uf">
+                  <option value="">{tr('cursos.ufAll')}</option>
+                  {porUf.map((g) => <option value={g.uf}>{g.nome}</option>)}
+                </select>
+              </label>
+              <label>
+                <span>{tr('cursos.nivel')}</span>
+                <select name="nivel">
+                  <option value="">{tr('cursos.nivelAll')}</option>
+                  {niveis.map((n) => <option value={n}>{rotuloNivel[n]}</option>)}
+                </select>
+              </label>
+              <label>
+                <span>{tr('cursos.modalidade')}</span>
+                <select name="modalidade">
+                  <option value="">{tr('cursos.modalidadeAll')}</option>
+                  {modalidades.map((m) => <option value={m}>{rotuloModalidade[m]}</option>)}
+                </select>
+              </label>
+              <button type="reset">{tr('cursos.clear')}</button>
+            </div>
+          </fieldset>
+          <p class="contagem" role="status" data-contagem>{contagem(cursos.length)}</p>
+        </form>
+
+        <div class="corpo">
+          {noMapa.length > 0 && (
+            <div class="mapa" data-com-js hidden>
+              <MapaCursos client:visible cursos={noMapa} rotulos={rotulos} />
+              <p class="nota">{tr('cursos.mapNote')}</p>
+            </div>
+          )}
+          <section class="lista" aria-labelledby="lista-cursos">
+            <h2 id="lista-cursos">{tr('cursos.list')}</h2>
+            {porUf.map((g) => (
+              <section class="uf" aria-labelledby={`uf-${g.uf}`} data-uf-grupo>
+                <h3 id={`uf-${g.uf}`}>{g.nome}</h3>
+                <ul>
+                  {g.itens.map((c) => (
+                    <li data-uf={c.uf} data-nivel={c.nivel} data-modalidade={c.modalidade}>
+                      {c.link ? <a href={c.link}>{c.instituicao}</a> : <strong>{c.instituicao}</strong>}
+                      <span class="detalhe">{[c.cidade, rotuloNivel[c.nivel], rotuloModalidade[c.modalidade]].filter(Boolean).join(' · ')}</span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))}
+          </section>
+        </div>
+      </>
+    )}
+  </div>
+  <script is:inline>
+    for (const el of document.querySelectorAll('[data-com-js]')) el.hidden = false;
+  </script>
+</Base>
+<script>
+  import { EVENTO_FILTRO, passaNoFiltro, type FiltroCursos } from '@/lib/cursos';
+  const form = document.querySelector<HTMLFormElement>('[data-cursos-filtros]');
+  if (form) {
+    const status = form.querySelector<HTMLElement>('[data-contagem]');
+    const itens = [...document.querySelectorAll<HTMLLIElement>('li[data-uf]')];
+    const grupos = [...document.querySelectorAll<HTMLElement>('[data-uf-grupo]')];
+    const regras = new Intl.PluralRules(document.documentElement.lang);
+    const valor = (nome: string) => (form.elements.namedItem(nome) as HTMLSelectElement).value;
+    const aplicar = () => {
+      const f: FiltroCursos = { uf: valor('uf'), nivel: valor('nivel'), modalidade: valor('modalidade') };
+      let n = 0;
+      for (const li of itens) {
+        const ok = passaNoFiltro({ uf: li.dataset.uf ?? '', nivel: li.dataset.nivel ?? '', modalidade: li.dataset.modalidade ?? '' }, f);
+        li.hidden = !ok;
+        if (ok) n++;
+      }
+      for (const g of grupos) g.hidden = !g.querySelector('li:not([hidden])');
+      if (status) {
+        const modelo = n === 0 ? form.dataset.vazio : regras.select(n) === 'one' ? form.dataset.um : form.dataset.varios;
+        status.textContent = (modelo ?? '').replace('{n}', String(n));
+      }
+      document.dispatchEvent(new CustomEvent(EVENTO_FILTRO, { detail: f }));
+    };
+    form.addEventListener('change', aplicar);
+    form.addEventListener('reset', () => setTimeout(aplicar));
+    form.addEventListener('submit', (e) => e.preventDefault());
+  }
+</script>
+<style>
+  .cursos { padding-block: var(--space-8) var(--space-12); }
+  h1 { font-size: var(--text-2xl); margin: 0 0 var(--space-4); max-width: 40rem; }
+  .lead { font-size: var(--text-lg); color: var(--color-ink-muted); max-width: 44rem; margin: 0 0 var(--space-8); }
+  .filtros { margin-bottom: var(--space-8); }
+  .filtros[hidden], .mapa[hidden], .uf[hidden], .uf li[hidden] { display: none; }
+  fieldset { border: 0; margin: 0; padding: 0; }
+  legend { font-weight: 600; margin-bottom: var(--space-3); padding: 0; }
+  .campos { display: flex; flex-wrap: wrap; gap: var(--space-4); align-items: end; }
+  label { display: grid; gap: var(--space-1); font-size: var(--text-sm); color: var(--color-ink-muted); }
+  select, button {
+    min-height: 44px; padding: var(--space-2) var(--space-3); font: inherit; font-size: var(--text-base); color: var(--color-ink);
+    background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius);
+  }
+  select { min-width: 12rem; }
+  button { font-size: var(--text-sm); font-weight: 600; cursor: pointer; }
+  select:hover, button:hover { border-color: var(--color-ink); }
+  .contagem { margin: var(--space-4) 0 0; font-size: var(--text-sm); color: var(--color-ink-muted); }
+  .corpo { display: grid; gap: var(--space-8); }
+  .mapa :global(.mapa-cursos) { position: relative; }
+  .mapa :global(.mapa-cursos__caixa) { height: 20rem; border: 1px solid var(--color-line); border-radius: var(--radius); background: var(--color-surface); }
+  .mapa :global(.mapa-cursos__carregando) { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; color: var(--color-ink-muted); font-size: var(--text-sm); }
+  .mapa :global(.leaflet-container) { font: inherit; }
+  .mapa :global(.leaflet-popup-content a) { color: var(--color-ink); font-weight: 600; }
+  .mapa :global(.leaflet-popup-content p) { margin: var(--space-1) 0 0; color: var(--color-ink-muted); }
+  .nota { font-size: var(--text-sm); color: var(--color-ink-muted); margin: var(--space-2) 0 0; }
+  .lista h2 { font-size: var(--text-xl); margin: 0 0 var(--space-6); }
+  .uf + .uf { margin-top: var(--space-8); }
+  .uf h3 { font-size: var(--text-lg); margin: 0 0 var(--space-3); }
+  .uf ul { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--color-line); }
+  .uf li { display: grid; gap: var(--space-1); padding-block: var(--space-3); border-bottom: 1px solid var(--color-line); }
+  .uf li a { font-weight: 600; text-underline-offset: 0.2em; }
+  .detalhe { font-size: var(--text-sm); color: var(--color-ink-muted); }
+  @media (min-width: 60rem) {
+    .corpo { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); align-items: start; }
+    .mapa { grid-column: 2; grid-row: 1; position: sticky; top: var(--space-4); }
+    .mapa :global(.mapa-cursos__caixa) { height: 32rem; }
+    .lista { grid-column: 1; grid-row: 1; }
+  }
+</style>

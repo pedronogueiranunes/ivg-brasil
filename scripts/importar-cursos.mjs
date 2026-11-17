@@ -49,7 +49,7 @@ const semGeo = args.includes('--sem-geo');
 const completarGeo = args.includes('--completar-geo');
 const iDestino = args.indexOf('--destino');
 const destino = iDestino >= 0 ? resolve(args[iDestino + 1] ?? '') : join(RAIZ, 'src', 'content', 'cursos', 'pt');
-const arquivo = args.find((a, i) => !a.startsWith('--') && i !== iDestino + 1);
+const arquivo = args.find((a, i) => !a.startsWith('--') && (iDestino < 0 || i !== iDestino + 1));
 if (!arquivo && !completarGeo) {
   console.error('Uso: node scripts/importar-cursos.mjs <arquivo.csv> [--force] [--sem-geo] [--completar-geo] [--destino <pasta>]');
   console.error('     node scripts/importar-cursos.mjs --completar-geo [--destino <pasta>]');
