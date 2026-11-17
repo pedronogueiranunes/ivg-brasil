@@ -9,7 +9,7 @@ import LangNotice from '@/components/LangNotice.astro';
 import { render } from 'astro:content';
 import { sections } from '@/i18n/nav';
 import { locales, defaultLocale } from '@/i18n/ui';
-import { getLocale, t } from '@/i18n/utils';
+import { getLocale, t, href } from '@/i18n/utils';
 import { getLocalized } from '@/lib/content';
 import { faqPage } from '@/lib/schema';
 export function getStaticPaths() {
@@ -43,6 +43,7 @@ const faq = page?.data.faq ?? [];
       {page.data.intro && <p class="lead">{page.data.intro}</p>}
       <div class="prose">{Content && <Content />}</div>
       {(slug === 'sobre' || slug === 'rio2030') && <CongressTimeline locale={locale} />}
+      {slug === 'pesquisa' && <p class="mais" lang={found?.fallback ? locale : undefined}><a href={href(locale, 'pesquisa/cursos')}>{tr('cursos.link')}</a></p>}
       <Faq items={faq} locale={found?.fallback ? defaultLocale : locale} />
       </div>
     </article>
@@ -59,6 +60,7 @@ const faq = page?.data.faq ?? [];
   h1 { font-size: var(--text-2xl); margin: 0 0 var(--space-4); max-width: 40rem; }
   .lead { font-size: var(--text-lg); color: var(--color-ink-muted); max-width: 44rem; margin: 0 0 var(--space-8); }
   .prose { max-width: 44rem; }
+  .mais { margin: var(--space-8) 0; font-weight: 600; }
   .prose :global(h2) { font-size: var(--text-xl); margin: var(--space-12) 0 var(--space-4); }
   .prose :global(li) { margin-bottom: var(--space-2); }
 </style>
