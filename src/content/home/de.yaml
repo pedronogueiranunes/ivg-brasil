@@ -1,0 +1,37 @@
+titulo: Brasilianische Germanistik auf dem Weg nach Rio 2030
+texto: >-
+  IVG Brasil ist das brasilianische Kapitel der Internationalen Vereinigung für Germanistik (IVG) und versammelt Forschende, Lehrende und Studierende der deutschen Sprache und Literatur in Brasilien. Zum ersten Mal seit 75 Jahren wird die IVG aus Lateinamerika geleitet, und der nächste Weltkongress findet 2030 in Rio de Janeiro statt.
+botao1Texto: IVG Brasil kennenlernen
+botao1Link: sobre
+botao2Texto: Rio 2030
+botao2Link: rio2030
+perfisTitulo: Wo Sie anfangen können
+perfis:
+  - titulo: Forschende
+    texto: Werden Sie Mitglied, verfolgen Sie die Aufrufe und bereiten Sie sich auf Rio 2030 vor.
+    link: filiacao
+  - titulo: Deutschlehrende
+    texto: Fortbildung, Materialien und eine Gemeinschaft für Ihren Unterricht.
+    link: ensino
+  - titulo: Studierende
+    texto: Entdecken Sie, was man nach der Schule mit Deutsch machen kann.
+    link: ensino
+  - titulo: Institutionen und Partner
+    texto: Leitung, Dokumente und Möglichkeiten, den Kongress zu unterstützen.
+    link: sobre
+numeros:
+  - valor: '1955'
+    rotulo: Gründung der IVG in Rom
+  - valor: '15'
+    rotulo: internationale Kongresse bisher
+  - valor: '1.'
+    rotulo: lateinamerikanische Präsidentschaft, seit 2025
+  - valor: '2030'
+    rotulo: XVI. Kongress in Rio de Janeiro
+filiarTitulo: Machen Sie mit
+filiarTexto: >-
+  Mitglieder der IVG nehmen an den Versammlungen teil, erhalten die Kongressaufrufe als Erste und helfen mit, die Richtung des Fachs zu bestimmen.
+filiarBotao: So werden Sie Mitglied
+seoTitulo: IVG Brasil · Germanistik, Deutschunterricht und der Kongress Rio 2030
+seoDescricao: >-
+  Brasilianisches Kapitel der Internationalen Vereinigung für Germanistik. Forschung, Deutschunterricht in Brasilien und der XVI. Internationale IVG-Kongress, Rio de Janeiro, 2030.
