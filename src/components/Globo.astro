@@ -31,6 +31,12 @@ const entidades = [...entidadesJson.entidades]
 
 const pings = pingsJson.pings;
 
+// Ranking de países (modo "países"): alternativa por botões para quem não usa o mouse no globo.
+const compacto = new Intl.NumberFormat(bcp, { notation: 'compact', maximumFractionDigits: 1 });
+const fMax = Math.max(...paises.map((p) => p.falantes));
+const fMin = Math.min(...paises.map((p) => p.falantes));
+const larguraBarra = (v: number) => 12 + 88 * ((Math.log10(v) - Math.log10(fMin)) / (Math.log10(fMax) - Math.log10(fMin)));
+
 const dados = {
   locale: bcp,
   paises,
@@ -44,6 +50,10 @@ const dados = {
     publico: tr('globe.ping.public'),
     privado: tr('globe.ping.private'),
     exemplo: tr('globe.ping.example'),
+    universidade: tr('globe.type.universidade'),
+    associacao: tr('globe.type.associacao'),
+    compactoMin: compacto.format(fMin),
+    compactoMax: compacto.format(fMax),
   },
 };
 const modos = [
@@ -63,7 +73,7 @@ const modos = [
           aria-controls="globo-palco" tabindex={i === 0 ? 0 : -1} data-modo={m.id} data-legenda={m.legenda}>{m.rotulo}</button>
       ))}
     </div>
-    <button type="button" class="girar" data-girar data-pause={tr('globe.pause')} data-play={tr('globe.play')}>{tr('globe.pause')}</button>
+    <button type="button" class="girar" data-girar data-pause={tr('globe.pause')} data-play={tr('globe.play')}><svg class="icone" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false" data-icone><rect x="3.5" y="3" width="3" height="10" rx="1"/><rect x="9.5" y="3" width="3" height="10" rx="1"/></svg><span data-girar-rotulo>{tr('globe.pause')}</span></button>
   </div>
 
   <div class="palco" id="globo-palco" role="tabpanel" aria-labelledby="globo-aba-paises">
@@ -72,6 +82,18 @@ const modos = [
     </div>
     <aside class="lateral">
       <p class="legenda" data-legenda aria-live="polite">{modos[0].legenda}</p>
+      <div class="chave" data-chave aria-hidden="true"></div>
+      <ul class="ranking" data-ranking>
+        {paises.map((p) => (
+          <li>
+            <button type="button" class="pais" data-iso={p.iso3166num}>
+              <span class="pais-nome">{p.nome}</span>
+              <span class="pais-barra" aria-hidden="true"><i style={`width:${larguraBarra(p.falantes).toFixed(0)}%`}></i></span>
+              <span class="pais-valor">{compacto.format(p.falantes)}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
       <div class="detalhe" data-detalhe aria-live="polite"></div>
       <p class="breve">
         <button type="button" class="btn-ping" disabled>{tr('globe.ping.add')}</button>
@@ -169,6 +191,8 @@ const modos = [
     let pausadoPeloUsuario = reduzido.matches;
     let sobAPonteiro = false;
     let features: any[] = [];
+    let passando: any = null;
+    let selecionado: any = null;
 
     const falantes = new Map(dados.paises.map((p) => [p.iso3166num, p]));
     const maxF = Math.max(...dados.paises.map((p) => p.falantes));
@@ -186,6 +210,10 @@ const modos = [
       return [parseInt(n.slice(0, 2), 16) || 0, parseInt(n.slice(2, 4), 16) || 0, parseInt(n.slice(4, 6), 16) || 0];
     }
     const [ar, ag, ab] = rgb(cor.acento);
+    const [tr_, tg, tb] = rgb(cor.tinta);
+    const chave = raiz.querySelector<HTMLElement>('[data-chave]')!;
+    const ranking = raiz.querySelector<HTMLElement>('[data-ranking]')!;
+    const codigo = (f: any) => String(f.id).padStart(3, '0');
 
     // HTML do cartão (dica ao passar o mouse e painel ao clicar).
     function cartaoPais(p: Pais) {
@@ -204,26 +232,73 @@ const modos = [
     }
     function mostrar(html: string) { detalhe.innerHTML = html; }
 
+    function canvasDe() { return tela.querySelector<HTMLCanvasElement>('canvas'); }
+
+    // Cor de cada ponto de terra: países de língua alemã em tom de acento (mais forte = mais falantes);
+    // o resto, em tinta bem suave, para a terra aparecer sem competir.
+    function corTerra(f: any) {
+      const p = modo === 'paises' ? falantes.get(codigo(f)) : undefined;
+      if (!p) return `rgba(${tr_},${tg},${tb},${modo === 'paises' ? 0.2 : 0.28})`;
+      if (f === passando || f === selecionado) return cor.acento;
+      return `rgba(${ar},${ag},${ab},${(0.4 + 0.6 * escala(p.falantes)).toFixed(2)})`;
+    }
+
+    // Centro aproximado do maior pedaço do país, para girar o globo até ele.
+    function centro(f: any): { lat: number; lng: number } {
+      const polis: number[][][][] = f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates;
+      const maior = polis.reduce((a, b) => (b[0].length > a[0].length ? b : a));
+      let x0 = 180, x1 = -180, y0 = 90, y1 = -90;
+      for (const [x, y] of maior[0]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+      return { lat: (y0 + y1) / 2, lng: (x0 + x1) / 2 };
+    }
+
+    function escolher(p: Pais, f: any, girarAte: boolean) {
+      selecionado = f;
+      mostrar(cartaoPais(p));
+      globo?.hexPolygonColor(corTerra);
+      for (const b of ranking.querySelectorAll<HTMLElement>('.pais')) b.classList.toggle('ativo', b.dataset.iso === p.iso3166num);
+      if (girarAte && globo) {
+        const c = centro(f);
+        globo.pointOfView({ ...c, altitude: estreito ? 1.7 : 2 }, reduzido.matches ? 0 : 900);
+        pausadoPeloUsuario = true; rotuloGirar(); girar();
+      }
+    }
+
+    // Legenda visual do modo atual, ao lado do texto da legenda.
+    function montarChave() {
+      const bolinha = (c: string, r: string) => `<li><i class="ponto" style="background:${c}"></i>${esc(r)}</li>`;
+      if (modo === 'paises') {
+        chave.innerHTML = `<div class="escala"><span class="escala-barra" style="background:linear-gradient(to right, rgba(${ar},${ag},${ab},0.4), rgb(${ar},${ag},${ab}))"></span><span class="escala-rot"><span>${esc(dados.rotulos.compactoMin)}</span><span>${esc(dados.rotulos.compactoMax)}</span></span></div>`;
+      } else if (modo === 'entidades') {
+        chave.innerHTML = `<ul class="pontos">${bolinha(cor.acento, dados.rotulos.universidade)}${bolinha(cor.tinta, dados.rotulos.associacao)}</ul>`;
+      } else {
+        chave.innerHTML = `<ul class="pontos">${bolinha(cor.acento, dados.rotulos.publico)}${bolinha(cor.mudo, dados.rotulos.anonimo)}</ul>`;
+      }
+    }
+
     function aplicarModo() {
       if (!globo) return;
       const g = globo;
-      g.polygonsData(features)
-        .polygonCapColor((f: any) => {
-          const p = modo === 'paises' ? falantes.get(String(f.id).padStart(3, '0')) : undefined;
-          if (!p) return cor.linha;
-          return `rgba(${ar},${ag},${ab},${(0.3 + 0.7 * escala(p.falantes)).toFixed(2)})`;
+      // Terra em pontos (hexágonos desenhados como círculos), colorida por país.
+      g.hexPolygonsData(features)
+        .hexPolygonColor(corTerra)
+        .hexPolygonAltitude((f: any) => {
+          const p = modo === 'paises' ? falantes.get(codigo(f)) : undefined;
+          return p ? 0.008 + 0.03 * escala(p.falantes) : 0.004;
         })
-        .polygonAltitude((f: any) => {
-          const p = modo === 'paises' ? falantes.get(String(f.id).padStart(3, '0')) : undefined;
-          return p ? 0.012 + 0.05 * escala(p.falantes) : 0.004;
-        })
-        .polygonLabel((f: any) => {
-          const p = modo === 'paises' ? falantes.get(String(f.id).padStart(3, '0')) : undefined;
+        .hexPolygonLabel((f: any) => {
+          const p = modo === 'paises' ? falantes.get(codigo(f)) : undefined;
           return p ? cartaoPais(p) : '';
         })
-        .onPolygonClick((f: any) => {
-          const p = modo === 'paises' ? falantes.get(String(f.id).padStart(3, '0')) : undefined;
-          if (p) mostrar(cartaoPais(p));
+        .onHexPolygonHover((f: any) => {
+          const p = f && modo === 'paises' ? falantes.get(codigo(f)) : undefined;
+          passando = p ? f : null;
+          canvasDe()?.style.setProperty('cursor', p ? 'pointer' : '');
+          g.hexPolygonColor(corTerra);
+        })
+        .onHexPolygonClick((f: any) => {
+          const p = modo === 'paises' ? falantes.get(codigo(f)) : undefined;
+          if (p) escolher(p, f, false);
         });
 
       if (modo === 'entidades') {
@@ -287,7 +362,11 @@ const modos = [
         }
       }
       for (const p of raiz.querySelectorAll<HTMLElement>('[data-painel]')) p.hidden = p.dataset.painel !== novo;
+      selecionado = null; passando = null;
+      ranking.hidden = novo !== 'paises';
+      for (const b of ranking.querySelectorAll<HTMLElement>('.pais')) b.classList.remove('ativo');
       mostrar('');
+      montarChave();
       aplicarModo();
     }
 
@@ -306,9 +385,20 @@ const modos = [
     });
 
     function rotuloGirar() {
-      botaoGirar.textContent = pausadoPeloUsuario ? botaoGirar.dataset.play! : botaoGirar.dataset.pause!;
+      botaoGirar.querySelector('[data-girar-rotulo]')!.textContent = pausadoPeloUsuario ? botaoGirar.dataset.play! : botaoGirar.dataset.pause!;
+      botaoGirar.querySelector('[data-icone]')!.innerHTML = pausadoPeloUsuario
+        ? '<path d="M5 3.2v9.6a.6.6 0 0 0 .9.5l7.6-4.8a.6.6 0 0 0 0-1L5.9 2.7a.6.6 0 0 0-.9.5z"/>'
+        : '<rect x="3.5" y="3" width="3" height="10" rx="1"/><rect x="9.5" y="3" width="3" height="10" rx="1"/>';
     }
     botaoGirar.addEventListener('click', () => { pausadoPeloUsuario = !pausadoPeloUsuario; rotuloGirar(); girar(); });
+
+    ranking.addEventListener('click', (e) => {
+      const b = (e.target as HTMLElement).closest<HTMLElement>('.pais');
+      if (!b || !globo) return;
+      const f = features.find((x) => codigo(x) === b.dataset.iso);
+      const p = falantes.get(b.dataset.iso ?? '');
+      if (f && p) escolher(p, f, true);
+    });
 
     async function carregar() {
       try {
@@ -325,13 +415,17 @@ const modos = [
         g.backgroundColor('rgba(0,0,0,0)')
           .showAtmosphere(false)
           .globeImageUrl(null as any)
-          .polygonSideColor(() => 'rgba(0,0,0,0)')
-          .polygonStrokeColor(() => cor.papel)
-          .polygonsTransitionDuration(reduzido.matches ? 0 : 400);
+          .hexPolygonResolution(3)
+          .hexPolygonMargin(0.3)
+          .hexPolygonUseDots(true)
+          .hexPolygonsTransitionDuration(reduzido.matches ? 0 : 400);
         const mat = g.globeMaterial() as any;
-        // Oceano em cor chapada: sem o sombreado cinza do material padrão.
+        // Esfera quase transparente, só um véu: o globo se mistura ao fundo da página e os pontos fazem o desenho.
         mat.color.set('#000000');
-        mat.emissive.set(cor.papel);
+        mat.emissive.set(cor.linha);
+        mat.emissiveIntensity = 1;
+        mat.transparent = true;
+        mat.opacity = 0.32;
         mat.shininess = 0;
         mat.specular?.set('#000000');
         const c = g.controls() as any;
@@ -353,6 +447,7 @@ const modos = [
         reduzido.addEventListener('change', () => { if (reduzido.matches) pausadoPeloUsuario = true; rotuloGirar(); aplicarModo(); girar(); });
 
         carregando.remove();
+        tela.setAttribute('data-pronto', '');
         tela.removeAttribute('aria-hidden');
         trocar(modo);
         girar();
@@ -378,42 +473,78 @@ const modos = [
   .globo h2 { margin: 0 0 var(--space-2); }
   .lead { margin: 0 0 var(--space-6); color: var(--color-ink-muted); max-width: 40rem; }
 
-  .barra { display: flex; flex-wrap: wrap; gap: var(--space-4); align-items: center; justify-content: space-between; margin-bottom: var(--space-4); }
-  .modos { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+  .barra { display: flex; flex-wrap: wrap; gap: var(--space-4); align-items: center; justify-content: space-between; margin-bottom: var(--space-6); }
+  /* Controle segmentado: um só bloco, a aba ativa em tinta cheia. */
+  .modos { display: inline-flex; gap: var(--space-1); padding: var(--space-1); border: 1px solid var(--color-line); border-radius: calc(var(--radius) + var(--space-1)); background: var(--color-surface); }
   @media (max-width: 40rem) {
     .barra { gap: var(--space-3); }
-    .modos {
-      flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none;
-      width: 100%; padding: 4px; margin: -4px;
-    }
+    .modos { width: 100%; overflow-x: auto; scrollbar-width: none; }
     .modos::-webkit-scrollbar { display: none; }
     .modos button { flex: none; white-space: nowrap; }
   }
-  .modos button, .girar {
-    font: inherit; font-weight: 600; padding: var(--space-2) var(--space-4); min-height: 2.75rem;
-    border: 1px solid var(--color-line); border-radius: var(--radius); background: var(--color-surface); color: var(--color-ink); cursor: pointer;
+  .modos button {
+    font: inherit; font-weight: 600; padding: var(--space-2) var(--space-4); min-height: 2.5rem;
+    border: 0; border-radius: var(--radius); background: transparent; color: var(--color-ink-muted); cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
   }
-  .modos button:hover, .girar:hover { border-color: var(--color-ink); }
-  .modos button[aria-selected='true'] { background: var(--color-ink); border-color: var(--color-ink); color: var(--color-paper); }
-  .girar { font-weight: 500; color: var(--color-ink-muted); }
-  .modos button:focus-visible, .girar:focus-visible, .texto summary:focus-visible, .btn-ping:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 2px; }
+  .modos button:hover { color: var(--color-ink); background: var(--color-paper); }
+  .modos button[aria-selected='true'] { background: var(--color-ink); color: var(--color-paper); }
+  .girar {
+    display: inline-flex; align-items: center; gap: var(--space-2);
+    font: inherit; font-weight: 500; padding: var(--space-2) var(--space-4); min-height: 2.75rem;
+    border: 1px solid var(--color-line); border-radius: var(--radius); background: transparent; color: var(--color-ink-muted); cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease;
+  }
+  .girar:hover { border-color: var(--color-ink); color: var(--color-ink); }
+  .icone { fill: currentColor; flex: none; }
+  .modos button:focus-visible, .girar:focus-visible, .texto summary:focus-visible, .btn-ping:focus-visible, .pais:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 2px; }
 
-  .palco { display: grid; gap: var(--space-6); grid-template-columns: minmax(0, 1fr); align-items: start; }
-  @media (min-width: 56rem) { .palco { grid-template-columns: minmax(0, 3fr) minmax(16rem, 1fr); } }
+  .palco { display: grid; gap: var(--space-8); grid-template-columns: minmax(0, 1fr); align-items: center; }
+  @media (min-width: 56rem) { .palco { grid-template-columns: minmax(0, 3fr) minmax(18rem, 1fr); } }
+  /* Sem caixa, sem fundo: o globo flutua direto sobre o papel da página. */
   .tela {
     position: relative; aspect-ratio: 1; max-height: 40rem; width: 100%;
     /* Sem overflow: hidden (para a dica poder sair do quadro), o aspect-ratio deixaria o
        conteúdo esticar a caixa e o ResizeObserver entraria em ciclo. min-height: 0 impede. */
     min-height: 0;
-    background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius);
     touch-action: pan-y;
   }
   /* O OrbitControls põe touch-action: none no canvas, o que impede rolar a página com o dedo
      sobre o globo. pan-y devolve a rolagem vertical; o arrasto horizontal continua girando. */
-  .tela :global(canvas) { display: block; touch-action: pan-y !important; }
+  .tela :global(canvas) { display: block; touch-action: pan-y !important; cursor: grab; opacity: 0; }
+  .tela :global(canvas:active) { cursor: grabbing; }
+  .tela[data-pronto] :global(canvas) { opacity: 1; transition: opacity 0.8s ease; }
+  @media (prefers-reduced-motion: reduce) { .tela[data-pronto] :global(canvas) { transition: none; } }
   .carregando { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; color: var(--color-ink-muted); }
+
   .lateral { display: grid; gap: var(--space-4); }
   .legenda { margin: 0; color: var(--color-ink-muted); }
+
+  /* Legenda visual do modo atual. */
+  .chave:empty { display: none; }
+  .chave :global(.escala) { display: grid; gap: var(--space-1); max-width: 14rem; }
+  .chave :global(.escala-barra) { display: block; height: 0.5rem; border-radius: 999px; }
+  .chave :global(.escala-rot) { display: flex; justify-content: space-between; font-size: var(--text-sm); color: var(--color-ink-muted); font-variant-numeric: tabular-nums; }
+  .chave :global(.pontos) { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); font-size: var(--text-sm); color: var(--color-ink-muted); }
+  .chave :global(.pontos li) { display: flex; align-items: center; gap: var(--space-2); }
+  .chave :global(.ponto) { display: inline-block; width: 0.75rem; height: 0.75rem; border-radius: 50%; flex: none; }
+
+  /* Ranking de países: lista de botões que gira o globo até o país. */
+  .ranking { list-style: none; margin: 0; padding: 0; max-height: 21rem; overflow-y: auto; display: grid; gap: 1px; }
+  .ranking[hidden] { display: none; }
+  .pais {
+    display: grid; grid-template-columns: minmax(0, 1fr) 3.5rem 4.5rem; align-items: center; gap: var(--space-3);
+    width: 100%; font: inherit; font-size: var(--text-sm); text-align: left; color: var(--color-ink);
+    padding: var(--space-2) var(--space-3); min-height: 2.5rem; border: 0; border-radius: var(--radius); background: transparent; cursor: pointer;
+    transition: background-color 0.15s ease;
+  }
+  .pais:hover { background: var(--color-surface); }
+  .pais.ativo { background: var(--color-surface); box-shadow: inset 0 0 0 1px var(--color-line); font-weight: 600; }
+  .pais-nome { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pais-barra { display: block; height: 0.375rem; border-radius: 999px; background: var(--color-line); overflow: hidden; }
+  .pais-barra i { display: block; height: 100%; background: var(--color-accent); border-radius: 999px; }
+  .pais-valor { text-align: right; color: var(--color-ink-muted); font-variant-numeric: tabular-nums; }
+
   .detalhe:empty { display: none; }
   .detalhe { background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius); padding: var(--space-4); }
   .breve { display: flex; align-items: center; gap: var(--space-3); margin: 0; color: var(--color-ink-muted); font-size: var(--text-sm); }
